@@ -1,0 +1,89 @@
+import { CalendarClock, Trophy, TrendingUp, ArrowRight } from "lucide-react";
+import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
+import { StatCard } from "@/components/dashboard/stat-card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { getCurrentUser } from "@/lib/get-current-user";
+import { getStudent, listStudentsByBatch } from "@/lib/store/students";
+import { listClassesByBatch } from "@/lib/store/classes";
+import { listSyllabusByBatch } from "@/lib/store/syllabus";
+import { listBroadcastsByBatch } from "@/lib/store/broadcasts";
+import { listNotificationsForUser } from "@/lib/store/notifications";
+import { hasEnded } from "@/lib/time-gate";
+
+export default async function StudentOverviewPage() {
+  const user = await getCurrentUser();
+  const student = user ? getStudent(user.userId) : undefined;
+
+  const upcomingClasses = student
+    ? listClassesByBatch(student.batchId).filter((c) => !hasEnded(c.scheduledAt, c.durationMinutes))
+    : [];
+  const nextClass = upcomingClasses[0];
+
+  const syllabusItems = student ? listSyllabusByBatch(student.batchId) : [];
+  const completedTopics = syllabusItems.filter((i) => i.status === "completed").length;
+  const syllabusPct =
+    syllabusItems.length === 0 ? 0 : Math.round((completedTopics / syllabusItems.length) * 100);
+
+  const ranked = student
+    ? listStudentsByBatch(student.batchId)
+        .slice()
+        .sort((a, b) => b.lastScore - a.lastScore)
+    : [];
+  const myRank = student ? ranked.findIndex((s) => s.id === student.id) + 1 : 0;
+
+  const latestBroadcast = student ? listBroadcastsByBatch(student.batchId)[0] : undefined;
+  const notifications = user ? listNotificationsForUser(user.userId) : [];
+
+  return (
+    <DashboardLayout
+      role="student"
+      userName={user?.fullName ?? "Student"}
+      pageTitle="Overview"
+      notifications={notifications}
+    >
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-4 sm:grid-cols-3">
+        <StatCard
+          label="Next Class"
+          value={nextClass ? nextClass.subject : "None"}
+          icon={CalendarClock}
+        />
+        <StatCard
+          label="Your Rank"
+          value={myRank > 0 ? `#${myRank}` : "—"}
+          icon={Trophy}
+          tone="success"
+        />
+        <StatCard label="Syllabus Progress" value={`${syllabusPct}%`} icon={TrendingUp} />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Latest announcement</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          {latestBroadcast
+            ? `${latestBroadcast.message} — ${latestBroadcast.tutorName}`
+            : "No announcements from your tutor yet."}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Syllabus progress</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Progress value={syllabusPct} />
+          <p className="text-sm text-muted-foreground">
+            {completedTopics} of {syllabusItems.length} topics completed
+          </p>
+          <Button variant="ghost" size="sm" className="px-0" render={<Link href="/student/progress" />}>
+            View full progress <ArrowRight className="size-4" />
+          </Button>
+        </CardContent>
+      </Card>
+    </DashboardLayout>
+  );
+}
