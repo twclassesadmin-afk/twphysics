@@ -7,7 +7,7 @@ import { createSessionCookieValue, SESSION_COOKIE_NAME } from "@/lib/session";
 import { ROLE_HOME, type UserRole } from "@/lib/roles";
 import { createAccount, getAccountByEmail, resolveAccountFullName, verifyCredentials } from "@/lib/store/accounts";
 import { addStudent } from "@/lib/store/students";
-import { getCourse, firstOpenBatchForCourse } from "@/lib/store/batches";
+import { getCourse, firstOpenBatchForCourseAndCategory } from "@/lib/store/batches";
 import { notifyUsers } from "@/lib/store/notifications";
 import { logActivity } from "@/lib/store/activity";
 
@@ -85,14 +85,17 @@ export async function signup(
 ): Promise<AuthActionState> {
   const parsed = signupSchema.safeParse({
     fullName: formData.get("fullName"),
-    email: formData.get("email"),
-    password: formData.get("password"),
     phone: formData.get("phone"),
-    age: Number(formData.get("age")),
     parentName: formData.get("parentName"),
     parentPhone: formData.get("parentPhone"),
-    address: formData.get("address"),
+    email: formData.get("email"),
+    password: formData.get("password"),
+    studentCategory: formData.get("studentCategory"),
     courseId: formData.get("courseId"),
+    stream: formData.get("stream"),
+    targetExams: formData.getAll("targetExams"),
+    learningMode: formData.get("learningMode"),
+    learningType: formData.get("learningType"),
   });
 
   if (!parsed.success) {
@@ -108,23 +111,26 @@ export async function signup(
     return { error: "Select a course to enroll in" };
   }
 
-  const batch = firstOpenBatchForCourse(course.id);
-  if (!batch) {
-    return { error: "All batches for this course are full — request a demo and we'll contact you" };
-  }
+  // No hard-fail if every batch for this course+category is full — register
+  // the student unassigned and let admin place them into a batch (or open a
+  // new one) instead of turning them away at the door.
+  const batch = firstOpenBatchForCourseAndCategory(course.id, parsed.data.studentCategory);
 
   const student = addStudent({
     name: parsed.data.fullName,
     email: parsed.data.email,
     phone: parsed.data.phone,
-    age: parsed.data.age,
     parentName: parsed.data.parentName,
     parentPhone: parsed.data.parentPhone,
-    address: parsed.data.address,
     courseId: course.id,
     courseName: course.name,
-    batchId: batch.id,
-    batchName: batch.name,
+    batchId: batch?.id ?? "",
+    batchName: batch?.name ?? "Awaiting batch assignment",
+    studentCategory: parsed.data.studentCategory,
+    stream: parsed.data.stream,
+    targetExams: parsed.data.targetExams,
+    learningMode: parsed.data.learningMode,
+    learningType: parsed.data.learningType,
   });
   createAccount({
     email: parsed.data.email,
@@ -133,15 +139,26 @@ export async function signup(
     linkedId: student.id,
   });
 
-  notifyUsers(["admin-1"], {
-    title: "New student enrolled",
-    message: `${student.name} enrolled in ${course.name} (${batch.name}).`,
-  });
-  notifyUsers([student.id], {
-    title: "Welcome to TWPHYSICS!",
-    message: `You're enrolled in ${course.name} — ${batch.name} (${batch.dailyTime}).`,
-  });
-  logActivity(student.name, "Enrolled via signup", `${course.name} — ${batch.name}`);
+  if (batch) {
+    notifyUsers(["admin-1"], {
+      title: "New student registered",
+      message: `${student.name} registered for ${course.name} (${batch.name}).`,
+    });
+    notifyUsers([student.id], {
+      title: "Welcome to TWPHYSICS!",
+      message: `You're registered for ${course.name} — ${batch.name} (${batch.dailyTime}).`,
+    });
+  } else {
+    notifyUsers(["admin-1"], {
+      title: "Student needs a batch",
+      message: `${student.name} registered for ${course.name} but every matching batch is full — assign them a batch.`,
+    });
+    notifyUsers([student.id], {
+      title: "Welcome to TWPHYSICS!",
+      message: `You're registered for ${course.name} — we'll confirm your batch and timing shortly.`,
+    });
+  }
+  logActivity(student.name, "Registered", `${course.name}${batch ? ` — ${batch.name}` : " — awaiting batch"}`);
 
   await setSession({
     userId: student.id,

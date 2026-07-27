@@ -37,13 +37,7 @@ export function markAllRead(userId: string): void {
 // the same notification kind can point at a different page depending on
 // whether a student, tutor, or admin is looking at it.
 export function notificationHref(notification: Notification, role: UserRole): string | undefined {
-  const id = notification.relatedEntityId;
   switch (notification.kind) {
-    case "exam_scheduled":
-      return id ? `/${role}/exams/${id}` : `/${role}/exams`;
-    case "exam_published":
-      if (role === "student") return id ? `/student/exams/${id}/review` : "/student/exams";
-      return id ? `/tutor/exams/${id}` : "/tutor/exams";
     case "issue":
       if (role === "student") return "/student/issues";
       if (role === "tutor") return "/tutor/communication";
@@ -51,9 +45,9 @@ export function notificationHref(notification: Notification, role: UserRole): st
     case "material":
       return role === "student" ? "/student/course" : "/tutor/materials";
     case "class":
-      return "/student/classes";
-    case "demo_request":
-      return "/admin/demo-requests";
+      if (role === "student") return "/student/classes";
+      if (role === "tutor") return "/tutor/batches";
+      return "/admin/batches";
     case "tutor_application":
       return "/admin/users";
     case "syllabus":

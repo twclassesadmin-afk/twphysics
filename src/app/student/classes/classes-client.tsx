@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Video, FileText, NotebookPen, Trash2 } from "lucide-react";
+import { Video, NotebookPen, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -93,15 +93,9 @@ export function StudentClassesClient({ classes }: { classes: ClassWithGate[] }) 
                       <Video /> Starts {new Date(cls.scheduledAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
                     </Button>
                   ) : cls.ended ? (
-                    cls.recordingUrl ? (
-                      <Button size="sm" variant="outline" render={<a href={cls.recordingUrl} target="_blank" rel="noopener noreferrer" />}>
-                        <FileText /> Watch Recording
-                      </Button>
-                    ) : (
-                      <Button size="sm" variant="outline" disabled>
-                        <FileText /> Recording pending
-                      </Button>
-                    )
+                    <Button size="sm" variant="outline" disabled>
+                      Class ended
+                    </Button>
                   ) : (
                     <Button size="sm" onClick={() => handleJoin(cls)}>
                       <Video /> Join

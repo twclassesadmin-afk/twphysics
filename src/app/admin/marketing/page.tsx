@@ -1,12 +1,11 @@
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import { getCurrentUser } from "@/lib/get-current-user";
-import { listFreeResources, listResults, listTestimonials } from "@/lib/store/marketing";
+import { listResults, listTestimonials } from "@/lib/store/marketing";
 import { listNotificationsForUser } from "@/lib/store/notifications";
 import { AdminMarketingClient } from "./marketing-client";
 
 export default async function AdminMarketingPage() {
   const user = await getCurrentUser();
-  const freeResources = listFreeResources();
   const results = listResults();
   const testimonials = listTestimonials();
   const notifications = user ? listNotificationsForUser(user.userId) : [];
@@ -18,7 +17,7 @@ export default async function AdminMarketingPage() {
       pageTitle="Homepage Content"
       notifications={notifications}
     >
-      <AdminMarketingClient freeResources={freeResources} results={results} testimonials={testimonials} />
+      <AdminMarketingClient results={results} testimonials={testimonials} />
     </DashboardLayout>
   );
 }

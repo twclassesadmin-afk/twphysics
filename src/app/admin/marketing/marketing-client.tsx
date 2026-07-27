@@ -10,13 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -25,36 +18,23 @@ import {
   DialogClose,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import type { FreeResource, ResultEntry, Testimonial } from "@/lib/store/types";
-import {
-  createFreeResource,
-  deleteFreeResource,
-  createResult,
-  deleteResult,
-  createTestimonial,
-  deleteTestimonial,
-} from "./actions";
+import type { ResultEntry, Testimonial } from "@/lib/store/types";
+import { createResult, deleteResult, createTestimonial, deleteTestimonial } from "./actions";
 
 export function AdminMarketingClient({
-  freeResources,
   results,
   testimonials,
 }: {
-  freeResources: FreeResource[];
   results: ResultEntry[];
   testimonials: Testimonial[];
 }) {
   return (
-    <Tabs defaultValue="resources">
+    <Tabs defaultValue="results">
       <TabsList>
-        <TabsTrigger value="resources">Free Resources</TabsTrigger>
         <TabsTrigger value="results">Results</TabsTrigger>
         <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="resources" className="mt-4">
-        <FreeResourcesTab freeResources={freeResources} />
-      </TabsContent>
       <TabsContent value="results" className="mt-4">
         <ResultsTab results={results} />
       </TabsContent>
@@ -62,126 +42,6 @@ export function AdminMarketingClient({
         <TestimonialsTab testimonials={testimonials} />
       </TabsContent>
     </Tabs>
-  );
-}
-
-function FreeResourcesTab({ freeResources }: { freeResources: FreeResource[] }) {
-  const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<{ title: string; description: string; type: FreeResource["type"]; url: string }>({
-    title: "",
-    description: "",
-    type: "pdf",
-    url: "",
-  });
-  const [pending, startTransition] = useTransition();
-
-  function submit() {
-    startTransition(async () => {
-      const result = await createFreeResource(draft);
-      if (result.ok) {
-        toast.success("Resource added to homepage");
-        setDraft({ title: "", description: "", type: "pdf", url: "" });
-        setOpen(false);
-      } else {
-        toast.error(result.error);
-      }
-    });
-  }
-
-  function remove(id: string) {
-    startTransition(async () => {
-      const result = await deleteFreeResource(id);
-      if (result.ok) toast("Resource removed");
-      else toast.error(result.error);
-    });
-  }
-
-  return (
-    <Card>
-      <CardHeader className="flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:space-y-0">
-        <CardTitle>Free Resources (homepage)</CardTitle>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger render={<Button size="sm" />}>
-            <Plus /> Add Resource
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add free resource</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="resource-title">Title</Label>
-                <Input
-                  id="resource-title"
-                  placeholder="Free Mock Test"
-                  value={draft.title}
-                  onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="resource-description">Description</Label>
-                <Textarea
-                  id="resource-description"
-                  rows={2}
-                  value={draft.description}
-                  onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Type</Label>
-                <Select
-                  value={draft.type}
-                  onValueChange={(value) => setDraft({ ...draft, type: (value as FreeResource["type"]) ?? "pdf" })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pdf">NCERT / PDF Notes</SelectItem>
-                    <SelectItem value="test">Mock Test</SelectItem>
-                    <SelectItem value="demo">Free Demo (uses the Book a Demo form)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {draft.type !== "demo" && (
-                <div className="space-y-2">
-                  <Label htmlFor="resource-url">{draft.type === "pdf" ? "PDF URL" : "Test URL"}</Label>
-                  <Input
-                    id="resource-url"
-                    placeholder="https://..."
-                    value={draft.url}
-                    onChange={(e) => setDraft({ ...draft, url: e.target.value })}
-                  />
-                </div>
-              )}
-            </div>
-            <DialogFooter>
-              <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-              <Button onClick={submit} disabled={pending || !draft.title.trim()}>
-                Add
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {freeResources.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No free resources yet.</p>
-        ) : (
-          freeResources.map((resource) => (
-            <div key={resource.id} className="flex items-center justify-between rounded-lg border p-3 text-sm">
-              <div>
-                <p className="font-medium">{resource.title}</p>
-                <p className="text-xs text-muted-foreground">{resource.description}</p>
-              </div>
-              <Button variant="ghost" size="sm" disabled={pending} onClick={() => remove(resource.id)}>
-                <Trash2 className="size-4" />
-              </Button>
-            </div>
-          ))
-        )}
-      </CardContent>
-    </Card>
   );
 }
 

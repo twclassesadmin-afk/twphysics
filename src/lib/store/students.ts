@@ -1,5 +1,14 @@
 import { db, nextId } from "./db";
-import type { AttendanceEntry, Student, StudentFlag, StudentTag } from "./types";
+import type {
+  AttendanceEntry,
+  LearningMode,
+  LearningType,
+  Stream,
+  Student,
+  StudentCategory,
+  StudentFlag,
+  StudentTag,
+} from "./types";
 
 export function listStudents(): Student[] {
   return db.students;
@@ -25,6 +34,11 @@ export function addStudent(input: {
   parentName?: string;
   parentPhone?: string;
   address?: string;
+  studentCategory?: StudentCategory | null;
+  stream?: Stream | null;
+  targetExams?: string[];
+  learningMode?: LearningMode | null;
+  learningType?: LearningType | null;
 }): Student {
   const student: Student = {
     id: nextId("s"),
@@ -39,17 +53,29 @@ export function addStudent(input: {
     courseName: input.courseName,
     batchId: input.batchId,
     batchName: input.batchName,
+    studentCategory: input.studentCategory ?? null,
+    stream: input.stream ?? null,
+    targetExams: input.targetExams ?? [],
+    learningMode: input.learningMode ?? null,
+    learningType: input.learningType ?? null,
     status: "active",
     attendancePct: 0,
-    lastScore: 0,
     tag: null,
     tagNote: "",
-    examHistory: [],
     attendanceLog: [],
     flags: [],
   };
   db.students.push(student);
   return student;
+}
+
+export function assignStudentToBatch(studentId: string, batchId: string, batchName: string, courseId: string, courseName: string): void {
+  const student = db.students.find((s) => s.id === studentId);
+  if (!student) return;
+  student.batchId = batchId;
+  student.batchName = batchName;
+  student.courseId = courseId;
+  student.courseName = courseName;
 }
 
 export function updateStudentContact(studentId: string, patch: { phone?: string; address?: string }): void {
@@ -89,11 +115,4 @@ export function recordAttendance(
   const total = student.attendanceLog.length;
   const attended = student.attendanceLog.filter((a) => a.attended).length;
   student.attendancePct = total === 0 ? 0 : Math.round((attended / total) * 100);
-}
-
-export function recordExamResult(studentId: string, title: string, score: number, totalMarks: number): void {
-  const student = db.students.find((s) => s.id === studentId);
-  if (!student) return;
-  student.examHistory.unshift({ title, score, totalMarks });
-  student.lastScore = score;
 }

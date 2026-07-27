@@ -113,7 +113,7 @@ export function TutorProfileClient({ tutor }: { tutor: Tutor }) {
             {(
               [
                 { key: "Full name", value: tutor.fullName },
-                { key: "Subjects", value: tutor.subjects },
+                { key: "Subjects", value: tutor.subjects.join(", ") },
                 { key: "Qualifications", value: tutor.qualifications },
               ]
             ).map((field) => (

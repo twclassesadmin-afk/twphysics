@@ -36,12 +36,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { Batch, Issue, Student, TutorApplication } from "@/lib/store/types";
-import { approveTutorApplication, rejectTutorApplication, addStudentAction } from "./actions";
+import { approveTutorApplication, rejectTutorApplication, addStudentAction, assignStudentBatch } from "./actions";
 
 const TAG_LABEL: Record<string, string> = {
   topper: "Topper",
   weak: "Weak",
   focus_needed: "Focus needed",
+};
+
+const CATEGORY_LABEL: Record<string, string> = {
+  college_going: "College-going",
+  long_term: "Long-term",
 };
 
 const BLANK_STUDENT = {
@@ -73,6 +78,7 @@ export function AdminUsersClient({
   const [newStudent, setNewStudent] = useState({ ...BLANK_STUDENT, batchId: batches[0]?.id ?? "" });
   const [reviewId, setReviewId] = useState<string | null>(null);
   const [initialPassword, setInitialPassword] = useState("");
+  const [assignBatchValue, setAssignBatchValue] = useState("");
   const [pending, startTransition] = useTransition();
 
   const filteredStudents = useMemo(
@@ -125,6 +131,19 @@ export function AdminUsersClient({
       if (result.ok) {
         toast("Application rejected");
         setReviewId(null);
+      } else {
+        toast.error(result.error);
+      }
+    });
+  }
+
+  function assignBatch(studentId: string) {
+    if (!assignBatchValue) return;
+    startTransition(async () => {
+      const result = await assignStudentBatch(studentId, assignBatchValue);
+      if (result.ok) {
+        toast.success("Batch assigned — student notified");
+        setAssignBatchValue("");
       } else {
         toast.error(result.error);
       }
@@ -292,7 +311,6 @@ export function AdminUsersClient({
                         <p className="mt-0.5 text-xs text-muted-foreground">{student.batchName}</p>
                         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                           <span>{student.attendancePct}% attendance</span>
-                          <span>Last score {student.lastScore}</span>
                           {student.tag && <Badge variant="outline">{TAG_LABEL[student.tag]}</Badge>}
                         </div>
                       </button>
@@ -308,7 +326,6 @@ export function AdminUsersClient({
                           <TableHead>Batch</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Attendance</TableHead>
-                          <TableHead>Last Score</TableHead>
                           <TableHead>Tag</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -330,7 +347,6 @@ export function AdminUsersClient({
                               </Badge>
                             </TableCell>
                             <TableCell>{student.attendancePct}%</TableCell>
-                            <TableCell>{student.lastScore}</TableCell>
                             <TableCell>
                               {student.tag ? <Badge variant="outline">{TAG_LABEL[student.tag]}</Badge> : "—"}
                             </TableCell>
@@ -374,7 +390,7 @@ export function AdminUsersClient({
                       </Badge>
                     </div>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {application.subjects} · {application.experience} · {application.submittedAt}
+                      {application.subjects.join(", ")} · {application.experience} · {application.submittedAt}
                     </p>
                     {application.status === "pending" ? (
                       <Button
@@ -411,7 +427,7 @@ export function AdminUsersClient({
                     {applications.map((application) => (
                       <TableRow key={application.id}>
                         <TableCell className="font-medium">{application.fullName}</TableCell>
-                        <TableCell>{application.subjects}</TableCell>
+                        <TableCell>{application.subjects.join(", ")}</TableCell>
                         <TableCell>{application.experience}</TableCell>
                         <TableCell className="text-muted-foreground">{application.submittedAt}</TableCell>
                         <TableCell>
@@ -471,6 +487,30 @@ export function AdminUsersClient({
                 </TabsList>
 
                 <TabsContent value="profile" className="mt-4 space-y-3">
+                  {!detailStudent.batchId && (
+                    <div className="space-y-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3">
+                      <p className="text-sm font-medium text-destructive">No batch assigned yet</p>
+                      <div className="flex gap-2">
+                        <Select value={assignBatchValue} onValueChange={(value) => setAssignBatchValue(value ?? "")}>
+                          <SelectTrigger className="flex-1">
+                            <SelectValue placeholder="Choose a batch" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {batches
+                              .filter((b) => b.courseId === detailStudent.courseId)
+                              .map((b) => (
+                                <SelectItem key={b.id} value={b.id}>
+                                  {b.name}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                        <Button size="sm" disabled={!assignBatchValue || pending} onClick={() => assignBatch(detailStudent.id)}>
+                          Assign
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 gap-3 text-sm">
                     <div>
                       <p className="text-xs text-muted-foreground">Email</p>
@@ -481,58 +521,48 @@ export function AdminUsersClient({
                       <p>{detailStudent.phone || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Age</p>
-                      <p>{detailStudent.age ?? "—"}</p>
-                    </div>
-                    <div>
                       <p className="text-xs text-muted-foreground">Status</p>
                       <p>{detailStudent.status === "active" ? "Active" : "Expiring soon"}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Parent/guardian</p>
+                      <p className="text-xs text-muted-foreground">Student type</p>
+                      <p>{detailStudent.studentCategory ? CATEGORY_LABEL[detailStudent.studentCategory] : "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Father&apos;s name</p>
                       <p>{detailStudent.parentName || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Parent phone</p>
+                      <p className="text-xs text-muted-foreground">Father&apos;s phone</p>
                       <p>{detailStudent.parentPhone || "—"}</p>
                     </div>
-                    <div className="col-span-2">
-                      <p className="text-xs text-muted-foreground">Address</p>
-                      <p>{detailStudent.address || "—"}</p>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Preparing for</p>
+                      <p>
+                        {detailStudent.stream ?? "—"}
+                        {detailStudent.targetExams.length > 0 ? ` (${detailStudent.targetExams.join(", ")})` : ""}
+                      </p>
                     </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Learning mode / type</p>
+                      <p>
+                        {detailStudent.learningMode ?? "—"}
+                        {detailStudent.learningType ? ` · ${detailStudent.learningType}` : ""}
+                      </p>
+                    </div>
+                    {detailStudent.address && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Address</p>
+                        <p>{detailStudent.address}</p>
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
 
                 <TabsContent value="academic" className="mt-4 space-y-4">
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="rounded-lg border p-3">
-                      <p className="text-xs text-muted-foreground">Attendance</p>
-                      <p className="font-semibold">{detailStudent.attendancePct}%</p>
-                    </div>
-                    <div className="rounded-lg border p-3">
-                      <p className="text-xs text-muted-foreground">Last Score</p>
-                      <p className="font-semibold">{detailStudent.lastScore}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="mb-2 text-sm font-medium">Exam history</p>
-                    {detailStudent.examHistory.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No exams recorded yet.</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {detailStudent.examHistory.map((exam) => (
-                          <div
-                            key={exam.title}
-                            className="flex items-center justify-between rounded-lg border p-2 text-sm"
-                          >
-                            <span>{exam.title}</span>
-                            <span className="font-medium">
-                              {exam.score}/{exam.totalMarks}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                  <div className="rounded-lg border p-3 text-sm">
+                    <p className="text-xs text-muted-foreground">Attendance</p>
+                    <p className="font-semibold">{detailStudent.attendancePct}%</p>
                   </div>
                   <div>
                     <p className="mb-2 text-sm font-medium">Attendance log</p>
@@ -628,7 +658,13 @@ export function AdminUsersClient({
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Subjects</p>
-                  <p>{reviewApplication.subjects}</p>
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {reviewApplication.subjects.map((subject) => (
+                      <Badge key={subject} variant="secondary">
+                        {subject}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Experience</p>

@@ -16,7 +16,7 @@ export function CourseCards() {
         <SectionHeading
           eyebrow="Courses"
           title="Choose your track"
-          description="Transparent pricing, no hidden fees. EMI available on every course."
+          description="Pick your exam track, then choose your batch size below for the fee schedule."
         />
         <div className="mt-14 grid gap-6 sm:grid-cols-2">
           {courses.map((course, i) => {
@@ -36,15 +36,7 @@ export function CourseCards() {
                     <p className="text-[15px] text-muted-foreground">{course.tagline}</p>
                   </CardHeader>
                   <CardContent className="flex-1 space-y-5">
-                    <div>
-                      <p className="font-heading text-4xl font-semibold tabular-nums">
-                        &#8377;{course.priceInInr.toLocaleString("en-IN")}
-                      </p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        or &#8377;{course.emiFromInr.toLocaleString("en-IN")}/mo EMI &middot;{" "}
-                        {course.durationMonths} months
-                      </p>
-                    </div>
+                    <p className="text-sm text-muted-foreground">{course.durationMonths}-month program</p>
                     <ul className="space-y-2.5">
                       {course.highlights.map((highlight) => (
                         <li key={highlight} className="flex items-start gap-2.5 text-[15px]">

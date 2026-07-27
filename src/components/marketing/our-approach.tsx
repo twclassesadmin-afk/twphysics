@@ -1,4 +1,4 @@
-import { Radio, ListChecks, Trophy, IndianRupee } from "lucide-react";
+import { Radio, ListChecks, Users, MonitorSmartphone } from "lucide-react";
 import { SectionHeading } from "./section-heading";
 
 const PILLARS = [
@@ -13,14 +13,14 @@ const PILLARS = [
     description: "Every topic has a deadline and a status — visible to you, your tutor, and your parents.",
   },
   {
-    icon: Trophy,
-    title: "Weekly full-syllabus tests",
-    description: "Real exam-pattern pressure every week, with rank tracking from day one.",
+    icon: MonitorSmartphone,
+    title: "Online or offline",
+    description: "Attend from home or in person — whichever fits your schedule better.",
   },
   {
-    icon: IndianRupee,
-    title: "Transparent, affordable pricing",
-    description: "One price, EMI available, no hidden fees — ever.",
+    icon: Users,
+    title: "Individual or group learning",
+    description: "Pick the format that suits how you learn best.",
   },
 ];
 

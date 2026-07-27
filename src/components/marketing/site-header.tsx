@@ -6,7 +6,6 @@ import { useState } from "react";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
-import { DemoRequestDialog } from "./demo-request-dialog";
 
 const NAV_LINKS = [
   { href: "#courses", label: "Courses" },
@@ -42,7 +41,9 @@ export function SiteHeader() {
           <Button render={<Link href="/login" />} variant="ghost" size="sm">
             Student Login
           </Button>
-          <DemoRequestDialog size="sm" />
+          <Button render={<Link href="/signup" />} size="sm">
+            Register Now
+          </Button>
         </div>
 
         <Sheet open={open} onOpenChange={setOpen}>
@@ -73,7 +74,7 @@ export function SiteHeader() {
                 <Button render={<Link href="/login" />} variant="outline">
                   Student Login
                 </Button>
-                <DemoRequestDialog />
+                <Button render={<Link href="/signup" />}>Register Now</Button>
               </div>
             </nav>
           </SheetContent>

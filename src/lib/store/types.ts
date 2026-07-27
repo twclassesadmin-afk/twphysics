@@ -14,7 +14,7 @@ export type TutorApplication = {
   fullName: string;
   email: string;
   phone: string;
-  subjects: string;
+  subjects: string[];
   qualifications: string;
   experience: string;
   availability: string;
@@ -31,7 +31,7 @@ export type Tutor = {
   fullName: string;
   email: string;
   phone: string;
-  subjects: string;
+  subjects: string[];
   qualifications: string;
   availability: string;
   bio: string;
@@ -58,6 +58,11 @@ export type AttendanceEntry = {
   attended: boolean;
 };
 
+export type StudentCategory = "college_going" | "long_term";
+export type Stream = "MPC" | "BiPC";
+export type LearningMode = "online" | "offline";
+export type LearningType = "individual" | "group";
+
 export type Student = {
   id: string;
   name: string;
@@ -71,23 +76,17 @@ export type Student = {
   courseName: string;
   batchId: string;
   batchName: string;
+  studentCategory: StudentCategory | null;
+  stream: Stream | null;
+  targetExams: string[];
+  learningMode: LearningMode | null;
+  learningType: LearningType | null;
   status: "active" | "expiring_soon";
   attendancePct: number;
-  lastScore: number;
   tag: StudentTag;
   tagNote: string;
-  examHistory: { title: string; score: number; totalMarks: number }[];
   attendanceLog: AttendanceEntry[];
   flags: StudentFlag[];
-};
-
-export type FreeResource = {
-  id: string;
-  title: string;
-  description: string;
-  type: "demo" | "pdf" | "test";
-  url: string;
-  createdAt: string;
 };
 
 export type ResultEntry = {
@@ -104,17 +103,6 @@ export type Testimonial = {
   name: string;
   role: string;
   quote: string;
-};
-
-export type DemoRequest = {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  courseInterest: string;
-  preferredTime: string;
-  status: "new" | "contacted" | "closed";
-  createdAt: string;
 };
 
 export type SyllabusItem = {
@@ -160,8 +148,6 @@ export type Course = {
   id: string;
   name: string;
   tagline: string;
-  priceInInr: number;
-  emiFromInr: number;
   durationMonths: number;
   highlights: string[];
 };
@@ -171,11 +157,35 @@ export type Batch = {
   name: string;
   courseId: string;
   course: string;
+  studentCategory: StudentCategory;
   startDate: string;
   dailyTime: string;
   capacity: number;
-  tutorId: string | null;
-  tutor: string;
+};
+
+// A batch can have several tutors, each teaching a different subject — one
+// row per (batch, subject). Assigning a new tutor to a subject that already
+// has one replaces that row rather than adding a second.
+export type BatchTutorAssignment = {
+  id: string;
+  batchId: string;
+  subject: string;
+  tutorId: string;
+  tutorName: string;
+};
+
+// Fee is driven purely by batch size (smaller batch = more personal attention
+// = higher fee) — client-confirmed as the same across MPC/BiPC and every
+// course. Billed yearly in 3 terms, not monthly — monthlyFeeInr is the unit
+// rate a term is computed from (see YEARLY_TERM_MONTHS at the call sites),
+// not a standalone monthly billing option. Editable by admin.
+export type PricingTier = {
+  id: string;
+  batchSize: number;
+  label: string;
+  subjectsCount: number;
+  daysPerSubjectPerMonth: number;
+  monthlyFeeInr: number;
 };
 
 export type Issue = {
@@ -192,12 +202,9 @@ export type Issue = {
 };
 
 export type NotificationKind =
-  | "exam_scheduled"
-  | "exam_published"
   | "issue"
   | "material"
   | "class"
-  | "demo_request"
   | "tutor_application"
   | "syllabus"
   | "generic";
@@ -224,45 +231,4 @@ export type ScheduledClass = {
   scheduledAt: string;
   durationMinutes: number;
   joinUrl: string;
-  recordingUrl: string | null;
-};
-
-export type QuestionOption = [string, string, string, string];
-
-export type Question = {
-  id: string;
-  examId: string;
-  text: string;
-  options: QuestionOption;
-  correctOptionIndex: 0 | 1 | 2 | 3;
-  marks: number;
-  negativeMarks: number;
-};
-
-export type Exam = {
-  id: string;
-  title: string;
-  subject: string;
-  batchId: string;
-  batchName: string;
-  scheduledAt: string;
-  durationMinutes: number;
-  totalMarks: number;
-  createdBy: string;
-  createdAt: string;
-  publishedAt: string | null;
-};
-
-export type ExamAnswer = { questionId: string; selectedOptionIndex: 0 | 1 | 2 | 3 | null };
-
-export type ExamAttempt = {
-  id: string;
-  examId: string;
-  studentId: string;
-  answers: ExamAnswer[];
-  startedAt: string;
-  submittedAt: string | null;
-  autoSubmitted: boolean;
-  score: number | null;
-  computedAt: string | null;
 };

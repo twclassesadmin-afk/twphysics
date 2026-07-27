@@ -1,4 +1,4 @@
-import { CalendarClock, Trophy, TrendingUp, ArrowRight } from "lucide-react";
+import { CalendarClock, ListChecks, TrendingUp, ArrowRight } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/get-current-user";
-import { getStudent, listStudentsByBatch } from "@/lib/store/students";
+import { getStudent } from "@/lib/store/students";
 import { listClassesByBatch } from "@/lib/store/classes";
 import { listSyllabusByBatch } from "@/lib/store/syllabus";
 import { listBroadcastsByBatch } from "@/lib/store/broadcasts";
@@ -27,13 +27,6 @@ export default async function StudentOverviewPage() {
   const syllabusPct =
     syllabusItems.length === 0 ? 0 : Math.round((completedTopics / syllabusItems.length) * 100);
 
-  const ranked = student
-    ? listStudentsByBatch(student.batchId)
-        .slice()
-        .sort((a, b) => b.lastScore - a.lastScore)
-    : [];
-  const myRank = student ? ranked.findIndex((s) => s.id === student.id) + 1 : 0;
-
   const latestBroadcast = student ? listBroadcastsByBatch(student.batchId)[0] : undefined;
   const notifications = user ? listNotificationsForUser(user.userId) : [];
 
@@ -51,10 +44,9 @@ export default async function StudentOverviewPage() {
           icon={CalendarClock}
         />
         <StatCard
-          label="Your Rank"
-          value={myRank > 0 ? `#${myRank}` : "—"}
-          icon={Trophy}
-          tone="success"
+          label="Syllabus Topics Left"
+          value={syllabusItems.length - completedTopics}
+          icon={ListChecks}
         />
         <StatCard label="Syllabus Progress" value={`${syllabusPct}%`} icon={TrendingUp} />
       </div>

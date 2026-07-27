@@ -1,8 +1,6 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -13,9 +11,8 @@ import {
 } from "@/components/ui/table";
 import { getCurrentUser } from "@/lib/get-current-user";
 import { getTutor, countClassesCompletedForTutor } from "@/lib/store/tutors";
-import { listBatches, getBatchFilledCount } from "@/lib/store/batches";
+import { listBatchesByTutor, getBatchFilledCount, subjectsForTutorInBatch } from "@/lib/store/batches";
 import { listStudents } from "@/lib/store/students";
-import { listExamsByBatch } from "@/lib/store/exams";
 import { listNotificationsForUser } from "@/lib/store/notifications";
 import { ResetPasswordDialog } from "../reset-password-dialog";
 
@@ -25,10 +22,9 @@ export default async function AdminTutorDetailPage({ params }: { params: Promise
   if (!tutor) notFound();
 
   const user = await getCurrentUser();
-  const assignedBatches = listBatches().filter((b) => b.tutorId === tutor.id);
+  const assignedBatches = listBatchesByTutor(tutor.id);
   const batchIds = assignedBatches.map((b) => b.id);
   const students = listStudents().filter((s) => batchIds.includes(s.batchId));
-  const exams = batchIds.flatMap((batchId) => listExamsByBatch(batchId));
   const classesCompleted = countClassesCompletedForTutor(tutor.id);
   const notifications = user ? listNotificationsForUser(user.userId) : [];
 
@@ -55,7 +51,7 @@ export default async function AdminTutorDetailPage({ params }: { params: Promise
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Subjects</p>
-            <p>{tutor.subjects}</p>
+            <p>{tutor.subjects.join(", ")}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Qualifications</p>
@@ -115,6 +111,9 @@ export default async function AdminTutorDetailPage({ params }: { params: Promise
                       {batch.course} · {batch.dailyTime}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
+                      Teaching: {subjectsForTutorInBatch(tutor.id, batch.id).join(", ")}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
                       {getBatchFilledCount(batch.id)}/{batch.capacity} filled
                     </p>
                   </div>
@@ -128,6 +127,7 @@ export default async function AdminTutorDetailPage({ params }: { params: Promise
                     <TableRow>
                       <TableHead>Batch</TableHead>
                       <TableHead>Course</TableHead>
+                      <TableHead>Teaching</TableHead>
                       <TableHead>Timing</TableHead>
                       <TableHead>Filled</TableHead>
                     </TableRow>
@@ -137,6 +137,9 @@ export default async function AdminTutorDetailPage({ params }: { params: Promise
                       <TableRow key={batch.id}>
                         <TableCell className="font-medium">{batch.name}</TableCell>
                         <TableCell className="text-muted-foreground">{batch.course}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {subjectsForTutorInBatch(tutor.id, batch.id).join(", ")}
+                        </TableCell>
                         <TableCell className="text-muted-foreground">{batch.dailyTime}</TableCell>
                         <TableCell>
                           {getBatchFilledCount(batch.id)}/{batch.capacity}
@@ -167,34 +170,6 @@ export default async function AdminTutorDetailPage({ params }: { params: Promise
                   </span>
                   <span className="text-muted-foreground">{student.attendancePct}% attendance</span>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Exams</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {exams.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No exams for this tutor&apos;s batches yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {exams.map((exam) => (
-                <Link
-                  key={exam.id}
-                  href={`/admin/exams/${exam.id}`}
-                  className="flex items-center justify-between rounded-lg border p-2 text-sm hover:bg-accent"
-                >
-                  <span>
-                    {exam.title} <span className="text-muted-foreground">· {exam.batchName}</span>
-                  </span>
-                  <Badge variant={exam.publishedAt ? "secondary" : "outline"}>
-                    {exam.publishedAt ? "Published" : "Not published"}
-                  </Badge>
-                </Link>
               ))}
             </div>
           )}

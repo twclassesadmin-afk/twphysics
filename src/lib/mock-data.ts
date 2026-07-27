@@ -43,10 +43,10 @@ export const liveStats = {
 };
 
 export const howItWorks = [
-  { step: 1, title: "Enroll", description: "Pick your course, pay securely via UPI/card/EMI." },
+  { step: 1, title: "Register", description: "Share your details and pick a course to get started." },
   { step: 2, title: "Get Batch & Tutor", description: "You're assigned a batch and a dedicated subject-wise tutor team." },
-  { step: 3, title: "Attend Live Classes", description: "Daily live classes, recordings available if you miss one." },
-  { step: 4, title: "Track Progress", description: "Weekly tests, syllabus tracking, and rank-based leaderboards." },
+  { step: 3, title: "Attend Live Classes", description: "Daily live classes over Zoom, online or in person." },
+  { step: 4, title: "Track Progress", description: "Syllabus tracking and attendance, visible to you and your parents." },
 ];
 
 export const tutorRoster = [
@@ -56,11 +56,11 @@ export const tutorRoster = [
 ];
 
 export const faqs = [
-  { id: "faq1", question: "What is the refund policy?", answer: "Full refund within 7 days of enrollment if you've attended fewer than 3 classes. See our Refund Policy page for details." },
-  { id: "faq2", question: "What are the class timings?", answer: "Morning (7–10 AM) and evening (5–8 PM) batches are available for every course, so you can pick what fits your school/college schedule." },
-  { id: "faq3", question: "How is doubt-clearing handled?", answer: "Raise a doubt anytime through the student dashboard — tutors respond within 24 hours, with live doubt-clearing sessions twice a week." },
+  { id: "faq1", question: "Are classes online or offline?", answer: "Both — you can choose whichever fits you better, or a mix of the two, when you register." },
+  { id: "faq2", question: "What are the class timings?", answer: "College-going students: 5:00–7:00 AM and 5:30–9:30 PM batches. Long-term students: 5:00 AM–9:30 PM. Pick what fits your schedule at registration." },
+  { id: "faq3", question: "How is doubt-clearing handled?", answer: "Raise a doubt anytime through the student dashboard — tutors respond within 24 hours." },
   { id: "faq4", question: "What is the faculty's background?", answer: "Every faculty member is verified and approved by our admin team before teaching, with qualifications and experience shown on their public profile." },
-  { id: "faq5", question: "Is there an EMI option?", answer: "Yes — all courses support 3, 6, and 12-month EMI plans via Razorpay at checkout." },
+  { id: "faq5", question: "Individual or group learning — which should I pick?", answer: "Individual is more focused one-on-one attention; group batches are more collaborative and often more affordable. You can choose either at registration." },
 ];
 
 // ---------------------------------------------------------------------------

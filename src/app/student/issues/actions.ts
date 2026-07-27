@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/get-current-user";
 import { addIssue } from "@/lib/store/issues";
 import { getStudent } from "@/lib/store/students";
-import { getBatch } from "@/lib/store/batches";
+import { listBatchTutors } from "@/lib/store/batches";
 import { notifyUsers } from "@/lib/store/notifications";
 
 export async function raiseIssue(
@@ -25,8 +25,9 @@ export async function raiseIssue(
 
   const recipients = ["admin-1"];
   const student = getStudent(user.userId);
-  const tutorId = student ? getBatch(student.batchId)?.tutorId : null;
-  if (tutorId) recipients.push(tutorId);
+  if (student) {
+    for (const bt of listBatchTutors(student.batchId)) recipients.push(bt.tutorId);
+  }
   notifyUsers(recipients, {
     title: "New issue raised",
     message: `${user.fullName}: ${subject}`,

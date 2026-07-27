@@ -1,7 +1,7 @@
+import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DemoRequestDialog } from "./demo-request-dialog";
 
 export function Hero() {
   return (
@@ -27,7 +27,9 @@ export function Hero() {
             within 24 hours — built for how toppers actually prepare.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <DemoRequestDialog size="lg" />
+            <Button render={<Link href="/signup" />} size="lg">
+              Register Now
+            </Button>
             <Button render={<a href="#courses" />} size="lg" variant="outline">
               Explore Courses
             </Button>

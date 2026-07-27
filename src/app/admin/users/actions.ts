@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/get-current-user";
 import { getTutorApplication, reviewTutorApplication, createTutorFromApplication } from "@/lib/store/tutors";
 import { createAccount, getAccountByEmail, setPasswordByLinkedId } from "@/lib/store/accounts";
-import { addStudent } from "@/lib/store/students";
+import { addStudent, assignStudentToBatch, getStudent } from "@/lib/store/students";
 import { getBatch } from "@/lib/store/batches";
 import { logActivity } from "@/lib/store/activity";
 import { notifyUsers } from "@/lib/store/notifications";
@@ -78,6 +78,27 @@ export async function addStudentAction(input: {
 
   const user = await getCurrentUser();
   logActivity(user?.fullName ?? "Admin", "Added student manually", `${student.name} — ${batch.name}`);
+
+  revalidatePath("/admin/users");
+  revalidatePath("/admin/batches");
+  return { ok: true };
+}
+
+export async function assignStudentBatch(studentId: string, batchId: string): Promise<ActionResult> {
+  const student = getStudent(studentId);
+  if (!student) return { ok: false, error: "Student not found" };
+  const batch = getBatch(batchId);
+  if (!batch) return { ok: false, error: "Batch not found" };
+
+  assignStudentToBatch(studentId, batch.id, batch.name, batch.courseId, batch.course);
+  notifyUsers([studentId], {
+    title: "Batch assigned",
+    message: `You've been placed in ${batch.name} (${batch.dailyTime}).`,
+    kind: "class",
+  });
+
+  const user = await getCurrentUser();
+  logActivity(user?.fullName ?? "Admin", "Assigned batch", `${student.name} → ${batch.name}`);
 
   revalidatePath("/admin/users");
   revalidatePath("/admin/batches");

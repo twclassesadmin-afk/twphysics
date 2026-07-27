@@ -33,6 +33,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { Batch, SyllabusItem } from "@/lib/store/types";
+import { SUBJECTS } from "@/lib/subjects";
 import { createSyllabusTopic } from "./actions";
 
 const STATUS_VARIANT: Record<string, "secondary" | "outline" | "destructive"> = {
@@ -49,7 +50,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export function AdminSyllabusClient({ items, batches }: { items: SyllabusItem[]; batches: Batch[] }) {
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState({ topic: "", subject: "", deadline: "", batchId: batches[0]?.id ?? "" });
+  const [draft, setDraft] = useState({ topic: "", subject: SUBJECTS[0] as string, deadline: "", batchId: batches[0]?.id ?? "" });
   const [pending, startTransition] = useTransition();
 
   function addTopic() {
@@ -57,7 +58,7 @@ export function AdminSyllabusClient({ items, batches }: { items: SyllabusItem[];
       const result = await createSyllabusTopic(draft);
       if (result.ok) {
         toast.success("Syllabus topic added — batch tutor notified");
-        setDraft({ topic: "", subject: "", deadline: "", batchId: batches[0]?.id ?? "" });
+        setDraft({ topic: "", subject: SUBJECTS[0], deadline: "", batchId: batches[0]?.id ?? "" });
         setOpen(false);
       } else {
         toast.error(result.error);
@@ -105,12 +106,22 @@ export function AdminSyllabusClient({ items, batches }: { items: SyllabusItem[];
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="subject">Subject</Label>
-                <Input
-                  id="subject"
+                <Label>Subject</Label>
+                <Select
                   value={draft.subject}
-                  onChange={(e) => setDraft({ ...draft, subject: e.target.value })}
-                />
+                  onValueChange={(value) => setDraft({ ...draft, subject: value ?? SUBJECTS[0] })}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SUBJECTS.map((subject) => (
+                      <SelectItem key={subject} value={subject}>
+                        {subject}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="deadline">Deadline</Label>

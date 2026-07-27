@@ -11,13 +11,12 @@ import {
 } from "@/components/ui/table";
 import { getCurrentUser } from "@/lib/get-current-user";
 import { listTutors } from "@/lib/store/tutors";
-import { listBatches } from "@/lib/store/batches";
+import { listBatchesByTutor } from "@/lib/store/batches";
 import { listNotificationsForUser } from "@/lib/store/notifications";
 
 export default async function AdminTutorsPage() {
   const user = await getCurrentUser();
   const tutors = listTutors();
-  const batches = listBatches();
   const notifications = user ? listNotificationsForUser(user.userId) : [];
 
   return (
@@ -41,7 +40,7 @@ export default async function AdminTutorsPage() {
               {/* Mobile card list */}
               <div className="space-y-2 sm:hidden">
                 {tutors.map((tutor) => {
-                  const assignedBatches = batches.filter((b) => b.tutorId === tutor.id);
+                  const assignedBatches = listBatchesByTutor(tutor.id);
                   return (
                     <Link
                       key={tutor.id}
@@ -49,7 +48,7 @@ export default async function AdminTutorsPage() {
                       className="block rounded-lg border p-3 text-sm"
                     >
                       <p className="font-medium">{tutor.fullName}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{tutor.subjects}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{tutor.subjects.join(", ")}</p>
                       <p className="mt-2 text-xs text-muted-foreground">
                         {assignedBatches.length === 0
                           ? "No batches assigned"
@@ -73,7 +72,7 @@ export default async function AdminTutorsPage() {
                   </TableHeader>
                   <TableBody>
                     {tutors.map((tutor) => {
-                      const assignedBatches = batches.filter((b) => b.tutorId === tutor.id);
+                      const assignedBatches = listBatchesByTutor(tutor.id);
                       return (
                         <TableRow key={tutor.id}>
                           <TableCell>
@@ -84,7 +83,7 @@ export default async function AdminTutorsPage() {
                               {tutor.fullName}
                             </Link>
                           </TableCell>
-                          <TableCell className="text-muted-foreground">{tutor.subjects}</TableCell>
+                          <TableCell className="text-muted-foreground">{tutor.subjects.join(", ")}</TableCell>
                           <TableCell className="text-muted-foreground">
                             {assignedBatches.length === 0
                               ? "None"

@@ -2,44 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/get-current-user";
-import {
-  addFreeResource,
-  removeFreeResource,
-  addResult,
-  removeResult,
-  addTestimonial,
-  removeTestimonial,
-} from "@/lib/store/marketing";
-import type { FreeResource } from "@/lib/store/types";
+import { addResult, removeResult, addTestimonial, removeTestimonial } from "@/lib/store/marketing";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
 async function requireAdmin() {
   const user = await getCurrentUser();
   return user?.role === "admin";
-}
-
-export async function createFreeResource(input: {
-  title: string;
-  description: string;
-  type: FreeResource["type"];
-  url: string;
-}): Promise<ActionResult> {
-  if (!(await requireAdmin())) return { ok: false, error: "Not authorized" };
-  if (!input.title.trim()) return { ok: false, error: "Title is required" };
-  if (input.type !== "demo" && !input.url.trim()) return { ok: false, error: "URL is required" };
-  addFreeResource(input);
-  revalidatePath("/admin/marketing");
-  revalidatePath("/");
-  return { ok: true };
-}
-
-export async function deleteFreeResource(id: string): Promise<ActionResult> {
-  if (!(await requireAdmin())) return { ok: false, error: "Not authorized" };
-  removeFreeResource(id);
-  revalidatePath("/admin/marketing");
-  revalidatePath("/");
-  return { ok: true };
 }
 
 export async function createResult(input: {

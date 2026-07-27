@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getCurrentUser } from "@/lib/get-current-user";
 import { getStudent, listStudentsByBatch } from "@/lib/store/students";
-import { getBatch } from "@/lib/store/batches";
+import { getBatch, listBatchTutors } from "@/lib/store/batches";
 import { listMaterialsByBatch } from "@/lib/store/materials";
 import { listNotificationsForUser } from "@/lib/store/notifications";
 
@@ -27,6 +27,7 @@ export default async function StudentCoursePage() {
     ? listStudentsByBatch(student.batchId).filter((s) => s.id !== student.id)
     : [];
   const materials = student ? listMaterialsByBatch(student.batchId) : [];
+  const batchTutors = student ? listBatchTutors(student.batchId) : [];
   const notifications = user ? listNotificationsForUser(user.userId) : [];
 
   return (
@@ -47,9 +48,15 @@ export default async function StudentCoursePage() {
             <>
               <p>Daily timing: {batch.dailyTime}</p>
               <p>Batch starts: {batch.startDate}</p>
-              <p>
-                Tutor: <span className="font-medium text-foreground">{batch.tutor}</span>
-              </p>
+              {batchTutors.length === 0 ? (
+                <p>Tutors: <span className="font-medium text-foreground">Not yet assigned</span></p>
+              ) : (
+                batchTutors.map((bt) => (
+                  <p key={bt.id}>
+                    {bt.subject}: <span className="font-medium text-foreground">{bt.tutorName}</span>
+                  </p>
+                ))
+              )}
             </>
           ) : (
             <p>You&apos;re not assigned to a batch yet — admin will place you soon.</p>

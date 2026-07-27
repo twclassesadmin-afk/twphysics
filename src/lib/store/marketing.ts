@@ -1,28 +1,5 @@
 import { db, nextId } from "./db";
-import type { FreeResource, ResultEntry, Testimonial } from "./types";
-
-export function listFreeResources(): FreeResource[] {
-  return db.freeResources;
-}
-
-export function addFreeResource(input: {
-  title: string;
-  description: string;
-  type: FreeResource["type"];
-  url: string;
-}): FreeResource {
-  const resource: FreeResource = {
-    id: nextId("res"),
-    createdAt: new Date().toISOString().slice(0, 10),
-    ...input,
-  };
-  db.freeResources.push(resource);
-  return resource;
-}
-
-export function removeFreeResource(id: string): void {
-  db.freeResources = db.freeResources.filter((r) => r.id !== id);
-}
+import type { ResultEntry, Testimonial } from "./types";
 
 export function listResults(): ResultEntry[] {
   return db.results;

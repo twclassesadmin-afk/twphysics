@@ -1,4 +1,5 @@
 import { db, nextId } from "./db";
+import { hasEnded } from "../time-gate";
 import type { Tutor, TutorApplication } from "./types";
 
 export function listTutorApplications(): TutorApplication[] {
@@ -58,5 +59,5 @@ export function updateTutorProfile(
 }
 
 export function countClassesCompletedForTutor(tutorId: string): number {
-  return db.classes.filter((c) => c.tutorId === tutorId && c.recordingUrl !== null).length;
+  return db.classes.filter((c) => c.tutorId === tutorId && hasEnded(c.scheduledAt, c.durationMinutes)).length;
 }

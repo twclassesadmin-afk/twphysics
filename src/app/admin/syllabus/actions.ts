@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/get-current-user";
 import { addSyllabusItem } from "@/lib/store/syllabus";
-import { getBatch } from "@/lib/store/batches";
+import { getBatch, listBatchTutors } from "@/lib/store/batches";
 import { notifyUsers } from "@/lib/store/notifications";
 import { logActivity } from "@/lib/store/activity";
 
@@ -28,8 +28,11 @@ export async function createSyllabusTopic(input: {
     subject: input.subject,
     deadline: input.deadline,
   });
-  if (batch.tutorId) {
-    notifyUsers([batch.tutorId], {
+  const subjectTutorIds = listBatchTutors(batch.id)
+    .filter((bt) => bt.subject === input.subject)
+    .map((bt) => bt.tutorId);
+  if (subjectTutorIds.length > 0) {
+    notifyUsers(subjectTutorIds, {
       title: "Syllabus updated",
       message: `New topic "${input.topic}" added to ${batch.name} (due ${input.deadline}).`,
       kind: "syllabus",

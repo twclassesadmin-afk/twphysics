@@ -26,13 +26,19 @@ export function scheduleClass(input: {
   durationMinutes: number;
   joinUrl: string;
 }): ScheduledClass {
-  const scheduled: ScheduledClass = { id: nextId("cl"), recordingUrl: null, ...input };
+  const scheduled: ScheduledClass = { id: nextId("cl"), ...input };
   db.classes.push(scheduled);
   return scheduled;
 }
 
-export function markClassRecorded(classId: string, recordingUrl: string): void {
+export function rescheduleClass(
+  classId: string,
+  patch: { scheduledAt?: string; durationMinutes?: number; joinUrl?: string },
+): ScheduledClass | undefined {
   const scheduled = db.classes.find((c) => c.id === classId);
-  if (!scheduled) return;
-  scheduled.recordingUrl = recordingUrl;
+  if (!scheduled) return undefined;
+  if (patch.scheduledAt !== undefined) scheduled.scheduledAt = patch.scheduledAt;
+  if (patch.durationMinutes !== undefined) scheduled.durationMinutes = patch.durationMinutes;
+  if (patch.joinUrl !== undefined) scheduled.joinUrl = patch.joinUrl;
+  return scheduled;
 }

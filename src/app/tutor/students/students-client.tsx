@@ -41,6 +41,11 @@ const TAG_LABEL: Record<string, string> = {
   focus_needed: "Focus needed",
 };
 
+const CATEGORY_LABEL: Record<string, string> = {
+  college_going: "College-going",
+  long_term: "Long-term",
+};
+
 type Tag = "topper" | "weak" | "focus_needed" | "none";
 
 export function TutorStudentsClient({ students, issues }: { students: Student[]; issues: Issue[] }) {
@@ -95,7 +100,6 @@ export function TutorStudentsClient({ students, issues }: { students: Student[];
                     <p className="mt-0.5 text-xs text-muted-foreground">{student.batchName}</p>
                     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                       <span>{student.attendancePct}% attendance</span>
-                      <span>Last score {student.lastScore}</span>
                       {student.tag && <Badge variant="outline">{TAG_LABEL[student.tag]}</Badge>}
                     </div>
                     <Button variant="outline" size="sm" className="mt-2 w-full" onClick={() => openTagDialog(student.id)}>
@@ -113,7 +117,6 @@ export function TutorStudentsClient({ students, issues }: { students: Student[];
                       <TableHead>Name</TableHead>
                       <TableHead>Batch</TableHead>
                       <TableHead>Attendance</TableHead>
-                      <TableHead>Last Score</TableHead>
                       <TableHead>Tag</TableHead>
                       <TableHead className="text-right">Action</TableHead>
                     </TableRow>
@@ -131,7 +134,6 @@ export function TutorStudentsClient({ students, issues }: { students: Student[];
                         </TableCell>
                         <TableCell className="text-muted-foreground">{student.batchName}</TableCell>
                         <TableCell>{student.attendancePct}%</TableCell>
-                        <TableCell>{student.lastScore}</TableCell>
                         <TableCell>
                           {student.tag ? <Badge variant="outline">{TAG_LABEL[student.tag]}</Badge> : "—"}
                         </TableCell>
@@ -179,12 +181,30 @@ export function TutorStudentsClient({ students, issues }: { students: Student[];
                       <p>{detailStudent.phone || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Parent/guardian</p>
+                      <p className="text-xs text-muted-foreground">Student type</p>
+                      <p>{detailStudent.studentCategory ? CATEGORY_LABEL[detailStudent.studentCategory] : "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Father&apos;s name</p>
                       <p>{detailStudent.parentName || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Parent phone</p>
+                      <p className="text-xs text-muted-foreground">Father&apos;s phone</p>
                       <p>{detailStudent.parentPhone || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Preparing for</p>
+                      <p>
+                        {detailStudent.stream ?? "—"}
+                        {detailStudent.targetExams.length > 0 ? ` (${detailStudent.targetExams.join(", ")})` : ""}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Learning mode / type</p>
+                      <p>
+                        {detailStudent.learningMode ?? "—"}
+                        {detailStudent.learningType ? ` · ${detailStudent.learningType}` : ""}
+                      </p>
                     </div>
                   </div>
                 </TabsContent>
@@ -200,22 +220,6 @@ export function TutorStudentsClient({ students, issues }: { students: Student[];
                       <p className="font-semibold">
                         {detailStudent.tag ? TAG_LABEL[detailStudent.tag] : "None"}
                       </p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="mb-2 text-sm font-medium">Exam history</p>
-                    <div className="space-y-2">
-                      {detailStudent.examHistory.map((exam) => (
-                        <div
-                          key={exam.title}
-                          className="flex items-center justify-between rounded-lg border p-2 text-sm"
-                        >
-                          <span>{exam.title}</span>
-                          <span className="font-medium">
-                            {exam.score}/{exam.totalMarks}
-                          </span>
-                        </div>
-                      ))}
                     </div>
                   </div>
                   <div>

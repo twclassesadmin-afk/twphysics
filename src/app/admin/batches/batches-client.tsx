@@ -27,14 +27,42 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Batch, Course, Student, Tutor } from "@/lib/store/types";
-import { createCourse, createBatch, assignTutorToBatch } from "./actions";
+import type { Batch, BatchTutorAssignment, Course, PricingTier, Student, StudentCategory, Tutor } from "@/lib/store/types";
+import { SUBJECTS } from "@/lib/subjects";
+import {
+  createCourse,
+  createBatch,
+  assignTutorToBatchSubject,
+  editBatchTiming,
+  createPricingTier,
+  editPricingTier,
+  deletePricingTier,
+} from "./actions";
+
+const CATEGORY_LABEL: Record<StudentCategory, string> = {
+  college_going: "College-going",
+  long_term: "Long-term",
+};
+
+// Client-confirmed: billed yearly in 3 equal terms (4 months each), not
+// monthly — monthlyFeeInr is the unit rate a term is computed from.
+const YEARLY_TERM_MONTHS = 4;
 
 type CourseWithSeats = Course & { seatsLeft: number };
-type BatchWithFilled = Batch & { filled: number };
+type BatchWithFilled = Batch & { filled: number; tutors: BatchTutorAssignment[] };
 
 function blankHighlights() {
   return ["", "", "", ""];
+}
+
+function blankTierDraft() {
+  return {
+    batchSize: "",
+    label: "",
+    subjectsCount: "3",
+    daysPerSubjectPerMonth: "12",
+    monthlyFeeInr: "",
+  };
 }
 
 export function AdminBatchesClient({
@@ -42,11 +70,13 @@ export function AdminBatchesClient({
   batches,
   tutors,
   students,
+  pricingTiers,
 }: {
   courses: CourseWithSeats[];
   batches: BatchWithFilled[];
   tutors: Tutor[];
   students: Student[];
+  pricingTiers: PricingTier[];
 }) {
   const [pending, startTransition] = useTransition();
 
@@ -54,19 +84,32 @@ export function AdminBatchesClient({
   const [newCourse, setNewCourse] = useState({
     name: "",
     tagline: "",
-    priceInInr: "",
-    emiFromInr: "",
     durationMonths: "12",
   });
   const [highlights, setHighlights] = useState<string[]>(blankHighlights());
 
   const [batchOpen, setBatchOpen] = useState(false);
-  const [newBatch, setNewBatch] = useState({ name: "", courseId: courses[0]?.id ?? "", capacity: "60", dailyTime: "" });
+  const [newBatch, setNewBatch] = useState<{
+    name: string;
+    courseId: string;
+    capacity: string;
+    dailyTime: string;
+    studentCategory: StudentCategory;
+  }>({ name: "", courseId: courses[0]?.id ?? "", capacity: "60", dailyTime: "", studentCategory: "college_going" });
 
   const [assignBatchId, setAssignBatchId] = useState<string | null>(null);
+  const [assignSubject, setAssignSubject] = useState<string>(SUBJECTS[0]);
   const [assignTutorId, setAssignTutorId] = useState("");
 
   const [rosterBatchId, setRosterBatchId] = useState<string | null>(null);
+
+  const [editTimingBatchId, setEditTimingBatchId] = useState<string | null>(null);
+  const [editDailyTime, setEditDailyTime] = useState("");
+
+  const [tierDialogOpen, setTierDialogOpen] = useState(false);
+  const [editingTierId, setEditingTierId] = useState<string | null>(null);
+  const [tierDraft, setTierDraft] = useState(blankTierDraft());
+  const [deleteTierId, setDeleteTierId] = useState<string | null>(null);
 
   function addCourse() {
     if (!newCourse.name.trim()) return;
@@ -74,14 +117,12 @@ export function AdminBatchesClient({
       const result = await createCourse({
         name: newCourse.name,
         tagline: newCourse.tagline,
-        priceInInr: Number(newCourse.priceInInr) || 0,
-        emiFromInr: Number(newCourse.emiFromInr) || Math.round((Number(newCourse.priceInInr) || 0) / 12),
         durationMonths: Number(newCourse.durationMonths) || 12,
         highlights,
       });
       if (result.ok) {
         toast.success("Course created");
-        setNewCourse({ name: "", tagline: "", priceInInr: "", emiFromInr: "", durationMonths: "12" });
+        setNewCourse({ name: "", tagline: "", durationMonths: "12" });
         setHighlights(blankHighlights());
         setCourseOpen(false);
       } else {
@@ -98,12 +139,13 @@ export function AdminBatchesClient({
         name: newBatch.name,
         courseId: newBatch.courseId,
         course: course?.name ?? "",
+        studentCategory: newBatch.studentCategory,
         capacity: Number(newBatch.capacity) || 0,
         dailyTime: newBatch.dailyTime || "TBD",
       });
       if (result.ok) {
         toast.success("Batch created");
-        setNewBatch({ name: "", courseId: courses[0]?.id ?? "", capacity: "60", dailyTime: "" });
+        setNewBatch({ name: "", courseId: courses[0]?.id ?? "", capacity: "60", dailyTime: "", studentCategory: "college_going" });
         setBatchOpen(false);
       } else {
         toast.error(result.error);
@@ -111,16 +153,84 @@ export function AdminBatchesClient({
     });
   }
 
+  function saveTiming() {
+    if (!editTimingBatchId || !editDailyTime.trim()) return;
+    startTransition(async () => {
+      const result = await editBatchTiming(editTimingBatchId, editDailyTime);
+      if (result.ok) {
+        toast.success("Timing updated — tutor and students notified");
+        setEditTimingBatchId(null);
+      } else {
+        toast.error(result.error);
+      }
+    });
+  }
+
   function assignTutor() {
-    if (!assignBatchId || !assignTutorId) return;
+    if (!assignBatchId || !assignSubject || !assignTutorId) return;
     const tutor = tutors.find((t) => t.id === assignTutorId);
     if (!tutor) return;
     startTransition(async () => {
-      const result = await assignTutorToBatch(assignBatchId, tutor.id, tutor.fullName);
+      const result = await assignTutorToBatchSubject(assignBatchId, assignSubject, tutor.id, tutor.fullName);
       if (result.ok) {
-        toast.success(`Tutor assigned — batch notified that their tutor is now ${tutor.fullName}`);
+        toast.success(`${tutor.fullName} assigned to teach ${assignSubject} — batch notified`);
         setAssignBatchId(null);
         setAssignTutorId("");
+      } else {
+        toast.error(result.error);
+      }
+    });
+  }
+
+  const tutorsForAssignSubject = tutors.filter((t) => t.subjects.includes(assignSubject));
+
+  function openAddTier() {
+    setEditingTierId(null);
+    setTierDraft(blankTierDraft());
+    setTierDialogOpen(true);
+  }
+
+  function openEditTier(tier: PricingTier) {
+    setEditingTierId(tier.id);
+    setTierDraft({
+      batchSize: String(tier.batchSize),
+      label: tier.label,
+      subjectsCount: String(tier.subjectsCount),
+      daysPerSubjectPerMonth: String(tier.daysPerSubjectPerMonth),
+      monthlyFeeInr: String(tier.monthlyFeeInr),
+    });
+    setTierDialogOpen(true);
+  }
+
+  function submitTier() {
+    const payload = {
+      batchSize: Number(tierDraft.batchSize) || 0,
+      label: tierDraft.label,
+      subjectsCount: Number(tierDraft.subjectsCount) || 0,
+      daysPerSubjectPerMonth: Number(tierDraft.daysPerSubjectPerMonth) || 0,
+      monthlyFeeInr: Number(tierDraft.monthlyFeeInr) || 0,
+    };
+    startTransition(async () => {
+      const result = editingTierId
+        ? await editPricingTier(editingTierId, payload)
+        : await createPricingTier(payload);
+      if (result.ok) {
+        toast.success(editingTierId ? "Pricing tier updated" : "Pricing tier added");
+        setTierDialogOpen(false);
+        setEditingTierId(null);
+      } else {
+        toast.error(result.error);
+      }
+    });
+  }
+
+  function confirmDeleteTier() {
+    if (!deleteTierId) return;
+    startTransition(async () => {
+      const result = await deletePricingTier(deleteTierId);
+      if (result.ok) {
+        toast.success("Pricing tier removed");
+        setDeleteTierId(null);
       } else {
         toast.error(result.error);
       }
@@ -136,6 +246,7 @@ export function AdminBatchesClient({
         <TabsList>
           <TabsTrigger value="courses">Courses</TabsTrigger>
           <TabsTrigger value="batches">Batches</TabsTrigger>
+          <TabsTrigger value="pricing">Pricing</TabsTrigger>
         </TabsList>
 
         <TabsContent value="courses" className="mt-4">
@@ -167,35 +278,14 @@ export function AdminBatchesClient({
                     onChange={(e) => setNewCourse({ ...newCourse, tagline: e.target.value })}
                   />
                 </div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="course-price">Price (₹)</Label>
-                    <Input
-                      id="course-price"
-                      type="number"
-                      value={newCourse.priceInInr}
-                      onChange={(e) => setNewCourse({ ...newCourse, priceInInr: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="course-emi">EMI/mo (₹)</Label>
-                    <Input
-                      id="course-emi"
-                      type="number"
-                      placeholder="auto"
-                      value={newCourse.emiFromInr}
-                      onChange={(e) => setNewCourse({ ...newCourse, emiFromInr: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="course-duration">Duration (mo)</Label>
-                    <Input
-                      id="course-duration"
-                      type="number"
-                      value={newCourse.durationMonths}
-                      onChange={(e) => setNewCourse({ ...newCourse, durationMonths: e.target.value })}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="course-duration">Duration (months)</Label>
+                  <Input
+                    id="course-duration"
+                    type="number"
+                    value={newCourse.durationMonths}
+                    onChange={(e) => setNewCourse({ ...newCourse, durationMonths: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Highlights (shown as bullet points on the pricing card)</Label>
@@ -242,15 +332,12 @@ export function AdminBatchesClient({
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   {course.name}
-                  <Badge variant="secondary">₹{course.priceInInr.toLocaleString("en-IN")}</Badge>
+                  <Badge variant="secondary">{course.seatsLeft} seats left</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-1 text-sm text-muted-foreground">
                 <p>
                   {course.tagline} · {course.durationMonths} months
-                </p>
-                <p>
-                  ₹{course.emiFromInr.toLocaleString("en-IN")}/mo EMI · {course.seatsLeft} seats left
                 </p>
                 {course.highlights.length > 0 && (
                   <ul className="mt-2 list-inside list-disc space-y-0.5">
@@ -306,6 +393,23 @@ export function AdminBatchesClient({
                   </Select>
                 </div>
                 <div className="space-y-2">
+                  <Label>Student category</Label>
+                  <Select
+                    value={newBatch.studentCategory}
+                    onValueChange={(value) =>
+                      setNewBatch({ ...newBatch, studentCategory: (value as StudentCategory) ?? "college_going" })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="college_going">College-going</SelectItem>
+                      <SelectItem value="long_term">Long-term</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="batch-capacity">Capacity</Label>
                   <Input
                     id="batch-capacity"
@@ -339,7 +443,10 @@ export function AdminBatchesClient({
             return (
               <Card key={batch.id}>
                 <CardHeader>
-                  <CardTitle className="text-base">{batch.name}</CardTitle>
+                  <CardTitle className="flex items-center justify-between text-base">
+                    {batch.name}
+                    <Badge variant="outline">{CATEGORY_LABEL[batch.studentCategory]}</Badge>
+                  </CardTitle>
                   <p className="text-sm text-muted-foreground">
                     {batch.course} · {batch.dailyTime} · Starts{" "}
                     {new Date(batch.startDate).toLocaleDateString("en-IN", {
@@ -353,20 +460,42 @@ export function AdminBatchesClient({
                   <p className="text-sm text-muted-foreground">
                     {batch.filled}/{batch.capacity} seats filled (auto-calculated)
                   </p>
-                  <p className="text-sm">
-                    Tutor: <span className="font-medium">{batch.tutor}</span>
-                  </p>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Tutors by subject</p>
+                    {batch.tutors.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">Unassigned</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5">
+                        {batch.tutors.map((bt) => (
+                          <Badge key={bt.id} variant="secondary">
+                            {bt.subject} — {bt.tutorName}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
-                <CardFooter className="gap-2">
+                <CardFooter className="flex-wrap gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
                       setAssignBatchId(batch.id);
-                      setAssignTutorId(batch.tutorId ?? "");
+                      setAssignSubject(SUBJECTS[0]);
+                      setAssignTutorId("");
                     }}
                   >
                     Assign Tutor
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setEditTimingBatchId(batch.id);
+                      setEditDailyTime(batch.dailyTime);
+                    }}
+                  >
+                    Edit Timing
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => setRosterBatchId(batch.id)}>
                     View Roster
@@ -378,6 +507,59 @@ export function AdminBatchesClient({
         </div>
       </section>
         </TabsContent>
+
+        <TabsContent value="pricing" className="mt-4">
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Pricing</h2>
+            <p className="text-sm text-muted-foreground">
+              Same fee applies across every course and stream — only batch size changes the price.
+              Billed yearly in 3 terms, not monthly.
+            </p>
+          </div>
+          <Button size="sm" variant="outline" onClick={openAddTier}>
+            <Plus /> Add Tier
+          </Button>
+        </div>
+        {pricingTiers.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No pricing tiers set yet.</p>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {pricingTiers.map((tier) => (
+              <Card key={tier.id}>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between text-base">
+                    {tier.label}
+                    <Badge variant="outline">{tier.batchSize} students</Badge>
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {tier.subjectsCount} subjects · {tier.daysPerSubjectPerMonth} days/subject/mo
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-1">
+                  <p className="font-heading text-2xl font-semibold tabular-nums">
+                    ₹{(tier.monthlyFeeInr * YEARLY_TERM_MONTHS).toLocaleString("en-IN")}
+                    <span className="text-sm font-normal text-muted-foreground">/term</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Billed yearly in 3 terms · ₹{tier.monthlyFeeInr.toLocaleString("en-IN")}/mo rate
+                  </p>
+                </CardContent>
+                <CardFooter className="gap-2">
+                  <Button variant="outline" size="sm" onClick={() => openEditTier(tier)}>
+                    Edit
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setDeleteTierId(tier.id)}>
+                    <Trash2 className="size-4" /> Remove
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
+        </TabsContent>
       </Tabs>
 
       <Dialog open={assignBatchId !== null} onOpenChange={(open) => !open && setAssignBatchId(null)}>
@@ -385,28 +567,169 @@ export function AdminBatchesClient({
           <DialogHeader>
             <DialogTitle>Assign tutor</DialogTitle>
             <DialogDescription>
-              Triggers an automatic batch-wide notification: &ldquo;Your tutor has been changed&rdquo;.
+              A batch can have a different tutor per subject. Assigning a subject that already has a
+              tutor replaces them, and notifies the batch.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
-            <Label>Tutor</Label>
-            <Select value={assignTutorId} onValueChange={(value) => setAssignTutorId(value ?? "")}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {tutors.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.fullName} — {t.subjects}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Subject</Label>
+              <Select
+                value={assignSubject}
+                onValueChange={(value) => {
+                  setAssignSubject(value ?? SUBJECTS[0]);
+                  setAssignTutorId("");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUBJECTS.map((subject) => (
+                    <SelectItem key={subject} value={subject}>
+                      {subject}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Tutor</Label>
+              <Select value={assignTutorId} onValueChange={(value) => setAssignTutorId(value ?? "")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a tutor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tutorsForAssignSubject.length === 0 ? (
+                    <SelectItem value="__none" disabled>
+                      No tutors teach {assignSubject}
+                    </SelectItem>
+                  ) : (
+                    tutorsForAssignSubject.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.fullName}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-            <Button onClick={assignTutor} disabled={pending}>
+            <Button onClick={assignTutor} disabled={pending || !assignTutorId}>
               Assign
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editTimingBatchId !== null} onOpenChange={(open) => !open && setEditTimingBatchId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit batch timing</DialogTitle>
+            <DialogDescription>
+              Notifies the batch&apos;s tutor and students that the daily timing has changed.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="edit-daily-time">Daily timing</Label>
+            <Input
+              id="edit-daily-time"
+              value={editDailyTime}
+              onChange={(e) => setEditDailyTime(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+            <Button onClick={saveTiming} disabled={pending || !editDailyTime.trim()}>
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={tierDialogOpen} onOpenChange={(open) => !open && setTierDialogOpen(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingTierId ? "Edit pricing tier" : "New pricing tier"}</DialogTitle>
+            <DialogDescription>
+              Shown to prospective students on the homepage and used for the tier&apos;s fee schedule.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="tier-label">Label</Label>
+              <Input
+                id="tier-label"
+                placeholder="Group of 9"
+                value={tierDraft.label}
+                onChange={(e) => setTierDraft({ ...tierDraft, label: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="tier-batch-size">Batch size</Label>
+                <Input
+                  id="tier-batch-size"
+                  type="number"
+                  value={tierDraft.batchSize}
+                  onChange={(e) => setTierDraft({ ...tierDraft, batchSize: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tier-monthly-fee">Monthly fee (₹)</Label>
+                <Input
+                  id="tier-monthly-fee"
+                  type="number"
+                  value={tierDraft.monthlyFeeInr}
+                  onChange={(e) => setTierDraft({ ...tierDraft, monthlyFeeInr: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="tier-subjects-count">Subjects covered</Label>
+                <Input
+                  id="tier-subjects-count"
+                  type="number"
+                  value={tierDraft.subjectsCount}
+                  onChange={(e) => setTierDraft({ ...tierDraft, subjectsCount: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tier-days">Days/subject/month</Label>
+                <Input
+                  id="tier-days"
+                  type="number"
+                  value={tierDraft.daysPerSubjectPerMonth}
+                  onChange={(e) => setTierDraft({ ...tierDraft, daysPerSubjectPerMonth: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+            <Button
+              onClick={submitTier}
+              disabled={pending || !tierDraft.label.trim() || !tierDraft.batchSize || !tierDraft.monthlyFeeInr}
+            >
+              {editingTierId ? "Save" : "Add Tier"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteTierId !== null} onOpenChange={(open) => !open && setDeleteTierId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove pricing tier?</DialogTitle>
+            <DialogDescription>This removes it from the homepage pricing display.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+            <Button variant="destructive" onClick={confirmDeleteTier} disabled={pending}>
+              Remove
             </Button>
           </DialogFooter>
         </DialogContent>
