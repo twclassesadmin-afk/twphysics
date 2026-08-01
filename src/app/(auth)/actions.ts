@@ -1,44 +1,16 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { createAuthUser } from "@/lib/supabase/admin";
 import { loginSchema, signupSchema } from "@/lib/validations/auth";
-import { createSessionCookieValue, SESSION_COOKIE_NAME } from "@/lib/session";
-import { ROLE_HOME, type UserRole } from "@/lib/roles";
-import { createAccount, getAccountByEmail, resolveAccountFullName, verifyCredentials } from "@/lib/store/accounts";
+import { ROLE_HOME, isUserRole } from "@/lib/roles";
 import { addStudent } from "@/lib/store/students";
 import { getCourse, firstOpenBatchForCourseAndCategory } from "@/lib/store/batches";
-import { notifyUsers } from "@/lib/store/notifications";
+import { notifyUsers, notifyAdmins } from "@/lib/store/notifications";
 import { logActivity } from "@/lib/store/activity";
 
 export type AuthActionState = { error: string } | null;
-
-// Mock/static phase: login accepts ANY email+password. If the email matches a
-// seeded account, that identity is used; otherwise the session falls back to
-// the demo identity for the role implied by where the user came from
-// (/admin → admin, /tutor → tutor, homepage login → student). Real credential
-// checks return when Supabase Auth is wired in the backend phase.
-
-const DEMO_IDENTITY: Record<UserRole, { userId: string; fullName: string }> = {
-  admin: { userId: "admin-1", fullName: "Admin User" },
-  tutor: { userId: "tut1", fullName: "Dr. Ramesh Chandra" },
-  student: { userId: "s1", fullName: "Anjali Sharma" },
-};
-
-function roleFromRedirect(redirectTo: string): UserRole {
-  if (redirectTo.startsWith("/admin")) return "admin";
-  if (redirectTo.startsWith("/tutor")) return "tutor";
-  return "student";
-}
-
-async function setSession(payload: { userId: string; role: UserRole; email: string; fullName: string }) {
-  const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE_NAME, await createSessionCookieValue(payload), {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-  });
-}
 
 export async function login(
   _prevState: AuthActionState,
@@ -48,34 +20,22 @@ export async function login(
     email: formData.get("email"),
     password: formData.get("password"),
   });
-
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
   }
 
   const redirectTo = String(formData.get("redirectTo") ?? "");
-  const account = verifyCredentials(parsed.data.email, parsed.data.password);
-
-  if (account) {
-    await setSession({
-      userId: account.linkedId,
-      role: account.role,
-      email: account.email,
-      fullName: resolveAccountFullName(account),
-    });
-    redirect(redirectTo || ROLE_HOME[account.role]);
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: parsed.data.email,
+    password: parsed.data.password,
+  });
+  if (error || !data.user) {
+    return { error: "Invalid email or password" };
   }
 
-  // Unknown credentials — static phase: log in as the demo identity for the
-  // role implied by the page they were trying to reach.
-  const role = roleFromRedirect(redirectTo);
-  const demo = DEMO_IDENTITY[role];
-  await setSession({
-    userId: demo.userId,
-    role,
-    email: parsed.data.email,
-    fullName: demo.fullName,
-  });
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).single();
+  const role = isUserRole(profile?.role) ? profile.role : "student";
   redirect(redirectTo || ROLE_HOME[role]);
 }
 
@@ -97,81 +57,86 @@ export async function signup(
     learningMode: formData.get("learningMode"),
     learningType: formData.get("learningType"),
   });
-
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
   }
 
-  if (getAccountByEmail(parsed.data.email)) {
-    return { error: "An account with this email already exists" };
-  }
-
-  const course = getCourse(parsed.data.courseId);
+  const course = await getCourse(parsed.data.courseId);
   if (!course) {
     return { error: "Select a course to enroll in" };
+  }
+
+  // Created via the admin API (email_confirm: true) rather than
+  // supabase.auth.signUp() — the hosted project requires email confirmation
+  // before a self-signed-up user gets an active session, which would leave
+  // no auth.uid() for the addStudent() insert below to satisfy RLS with.
+  // Creating pre-confirmed and immediately signing in sidesteps that gate
+  // entirely, matching the "register and land straight in your dashboard"
+  // flow this app has always had.
+  const created = await createAuthUser({
+    email: parsed.data.email,
+    password: parsed.data.password,
+    fullName: parsed.data.fullName,
+    role: "student",
+  });
+  if ("error" in created) {
+    return { error: created.error.includes("already been registered") ? "An account with this email already exists" : created.error };
+  }
+
+  const supabase = await createClient();
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: parsed.data.email,
+    password: parsed.data.password,
+  });
+  if (signInError) {
+    return { error: "Account created but sign-in failed — try logging in from the login page." };
   }
 
   // No hard-fail if every batch for this course+category is full — register
   // the student unassigned and let admin place them into a batch (or open a
   // new one) instead of turning them away at the door.
-  const batch = firstOpenBatchForCourseAndCategory(course.id, parsed.data.studentCategory);
+  const batch = await firstOpenBatchForCourseAndCategory(course.id, parsed.data.studentCategory);
 
-  const student = addStudent({
-    name: parsed.data.fullName,
-    email: parsed.data.email,
+  const student = await addStudent({
+    id: created.id,
     phone: parsed.data.phone,
     parentName: parsed.data.parentName,
     parentPhone: parsed.data.parentPhone,
     courseId: course.id,
-    courseName: course.name,
     batchId: batch?.id ?? "",
-    batchName: batch?.name ?? "Awaiting batch assignment",
     studentCategory: parsed.data.studentCategory,
     stream: parsed.data.stream,
     targetExams: parsed.data.targetExams,
     learningMode: parsed.data.learningMode,
     learningType: parsed.data.learningType,
   });
-  createAccount({
-    email: parsed.data.email,
-    password: parsed.data.password,
-    role: "student",
-    linkedId: student.id,
-  });
 
   if (batch) {
-    notifyUsers(["admin-1"], {
+    await notifyAdmins({
       title: "New student registered",
       message: `${student.name} registered for ${course.name} (${batch.name}).`,
     });
-    notifyUsers([student.id], {
+    await notifyUsers([student.id], {
       title: "Welcome to TWPHYSICS!",
       message: `You're registered for ${course.name} — ${batch.name} (${batch.dailyTime}).`,
     });
   } else {
-    notifyUsers(["admin-1"], {
+    await notifyAdmins({
       title: "Student needs a batch",
       message: `${student.name} registered for ${course.name} but every matching batch is full — assign them a batch.`,
     });
-    notifyUsers([student.id], {
+    await notifyUsers([student.id], {
       title: "Welcome to TWPHYSICS!",
       message: `You're registered for ${course.name} — we'll confirm your batch and timing shortly.`,
     });
   }
-  logActivity(student.name, "Registered", `${course.name}${batch ? ` — ${batch.name}` : " — awaiting batch"}`);
-
-  await setSession({
-    userId: student.id,
-    role: "student",
-    email: parsed.data.email,
-    fullName: student.name,
-  });
+  await logActivity(student.name, "Registered", `${course.name}${batch ? ` — ${batch.name}` : " — awaiting batch"}`);
 
   redirect("/student");
 }
 
 export async function logout() {
-  const cookieStore = await cookies();
-  cookieStore.delete(SESSION_COOKIE_NAME);
+  const supabase = await createClient();
+  await supabase.auth.signOut();
   redirect("/");
 }

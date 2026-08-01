@@ -13,8 +13,8 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-export function Testimonials() {
-  const testimonials = listTestimonials();
+export async function Testimonials() {
+  const testimonials = await listTestimonials();
   if (testimonials.length === 0) return null;
 
   return (

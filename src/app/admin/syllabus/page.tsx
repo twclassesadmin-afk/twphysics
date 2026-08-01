@@ -7,9 +7,9 @@ import { AdminSyllabusClient } from "./syllabus-client";
 
 export default async function AdminSyllabusPage() {
   const user = await getCurrentUser();
-  const items = listSyllabus();
-  const batches = listBatches();
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const items = await listSyllabus();
+  const batches = await listBatches();
+  const notifications = user ? await listNotificationsForUser(user.userId) : [];
 
   return (
     <DashboardLayout

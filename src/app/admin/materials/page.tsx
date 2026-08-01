@@ -15,8 +15,8 @@ import { listNotificationsForUser } from "@/lib/store/notifications";
 
 export default async function AdminMaterialsPage() {
   const user = await getCurrentUser();
-  const materials = listAllMaterials();
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const materials = await listAllMaterials();
+  const notifications = user ? await listNotificationsForUser(user.userId) : [];
 
   return (
     <DashboardLayout

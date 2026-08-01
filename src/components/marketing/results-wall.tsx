@@ -14,8 +14,8 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-export function ResultsWall() {
-  const results = listResults();
+export async function ResultsWall() {
+  const results = await listResults();
   if (results.length === 0) return null;
 
   return (

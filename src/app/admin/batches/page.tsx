@@ -9,12 +9,22 @@ import { AdminBatchesClient } from "./batches-client";
 
 export default async function AdminBatchesPage() {
   const user = await getCurrentUser();
-  const courses = listCourses().map((c) => ({ ...c, seatsLeft: getCourseSeatsLeft(c.id) }));
-  const batches = listBatches().map((b) => ({ ...b, filled: getBatchFilledCount(b.id), tutors: listBatchTutors(b.id) }));
-  const tutors = listTutors();
-  const students = listStudents();
-  const pricingTiers = listPricingTiers();
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const [rawCourses, rawBatches, tutors, students, pricingTiers, notifications] = await Promise.all([
+    listCourses(),
+    listBatches(),
+    listTutors(),
+    listStudents(),
+    listPricingTiers(),
+    user ? listNotificationsForUser(user.userId) : Promise.resolve([]),
+  ]);
+  const courses = await Promise.all(rawCourses.map(async (c) => ({ ...c, seatsLeft: await getCourseSeatsLeft(c.id) })));
+  const batches = await Promise.all(
+    rawBatches.map(async (b) => ({
+      ...b,
+      filled: await getBatchFilledCount(b.id),
+      tutors: await listBatchTutors(b.id),
+    })),
+  );
 
   return (
     <DashboardLayout

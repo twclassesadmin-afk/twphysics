@@ -15,22 +15,23 @@ import { hasEnded } from "@/lib/time-gate";
 
 export default async function TutorOverviewPage() {
   const user = await getCurrentUser();
-  const batches = user ? listBatchesByTutor(user.userId) : [];
+  const [batches, rawUpcoming, syllabus, allStudents, allIssues, notifications] = await Promise.all([
+    user ? listBatchesByTutor(user.userId) : Promise.resolve([]),
+    user ? listClassesByTutor(user.userId) : Promise.resolve([]),
+    listSyllabus(),
+    listStudents(),
+    listIssues(),
+    user ? listNotificationsForUser(user.userId) : Promise.resolve([]),
+  ]);
   const batchIds = batches.map((b) => b.id);
-
-  const upcomingClasses = user
-    ? listClassesByTutor(user.userId).filter((c) => !hasEnded(c.scheduledAt, c.durationMinutes))
-    : [];
-  const pendingSyllabus = listSyllabus().filter(
+  const upcomingClasses = rawUpcoming.filter((c) => !hasEnded(c.scheduledAt, c.durationMinutes));
+  const pendingSyllabus = syllabus.filter(
     (item) => batchIds.includes(item.batchId) && item.status !== "completed",
   );
-  const myStudentIds = listStudents()
-    .filter((s) => batchIds.includes(s.batchId))
-    .map((s) => s.id);
-  const openIssues = listIssues().filter(
+  const myStudentIds = allStudents.filter((s) => batchIds.includes(s.batchId)).map((s) => s.id);
+  const openIssues = allIssues.filter(
     (i) => i.raisedByRole === "student" && myStudentIds.includes(i.raisedById) && i.status !== "resolved",
   );
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
 
   return (
     <DashboardLayout

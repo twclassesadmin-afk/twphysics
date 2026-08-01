@@ -8,10 +8,10 @@ import { logActivity } from "@/lib/store/activity";
 export async function advanceTopic(id: string): Promise<{ ok: true } | { ok: false; error: string }> {
   const user = await getCurrentUser();
   if (!user || user.role !== "tutor") return { ok: false, error: "Not authorized" };
-  const item = advanceSyllabusStatus(id);
+  const item = await advanceSyllabusStatus(id);
   if (!item) return { ok: false, error: "Topic not found" };
   if (item.status === "completed") {
-    logActivity(user.fullName, "Marked syllabus topic complete", `${item.topic} — ${item.batchName}`);
+    await logActivity(user.fullName, "Marked syllabus topic complete", `${item.topic} — ${item.batchName}`);
   }
   revalidatePath("/tutor/syllabus");
   revalidatePath("/admin/syllabus");

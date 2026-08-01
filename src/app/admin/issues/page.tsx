@@ -6,8 +6,8 @@ import { AdminIssuesClient } from "./issues-client";
 
 export default async function AdminIssuesPage() {
   const user = await getCurrentUser();
-  const issues = listIssues();
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const issues = await listIssues();
+  const notifications = user ? await listNotificationsForUser(user.userId) : [];
 
   return (
     <DashboardLayout

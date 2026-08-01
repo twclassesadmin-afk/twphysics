@@ -1,36 +1,48 @@
-import { db, nextId } from "./db";
+import { createClient } from "@/lib/supabase/server";
 import type { ResultEntry, Testimonial } from "./types";
 
-export function listResults(): ResultEntry[] {
-  return db.results;
+export async function listResults(): Promise<ResultEntry[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("results").select("*");
+  if (error) throw error;
+  return data;
 }
 
-export function addResult(input: {
+export async function addResult(input: {
   name: string;
   exam: string;
   rank: string;
   score: string;
   quote: string;
-}): ResultEntry {
-  const result: ResultEntry = { id: nextId("res-entry"), ...input };
-  db.results.unshift(result);
-  return result;
+}): Promise<ResultEntry> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("results").insert(input).select().single();
+  if (error) throw error;
+  return data;
 }
 
-export function removeResult(id: string): void {
-  db.results = db.results.filter((r) => r.id !== id);
+export async function removeResult(id: string): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("results").delete().eq("id", id);
+  if (error) throw error;
 }
 
-export function listTestimonials(): Testimonial[] {
-  return db.testimonials;
+export async function listTestimonials(): Promise<Testimonial[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("testimonials").select("*");
+  if (error) throw error;
+  return data;
 }
 
-export function addTestimonial(input: { name: string; role: string; quote: string }): Testimonial {
-  const testimonial: Testimonial = { id: nextId("test"), ...input };
-  db.testimonials.unshift(testimonial);
-  return testimonial;
+export async function addTestimonial(input: { name: string; role: string; quote: string }): Promise<Testimonial> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("testimonials").insert(input).select().single();
+  if (error) throw error;
+  return data;
 }
 
-export function removeTestimonial(id: string): void {
-  db.testimonials = db.testimonials.filter((t) => t.id !== id);
+export async function removeTestimonial(id: string): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("testimonials").delete().eq("id", id);
+  if (error) throw error;
 }

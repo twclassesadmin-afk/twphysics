@@ -22,9 +22,9 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default async function StudentProgressPage() {
   const user = await getCurrentUser();
-  const student = user ? getStudent(user.userId) : undefined;
-  const syllabusItems = student ? listSyllabusByBatch(student.batchId) : [];
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const student = user ? await getStudent(user.userId) : undefined;
+  const syllabusItems = student ? await listSyllabusByBatch(student.batchId) : [];
+  const notifications = user ? await listNotificationsForUser(user.userId) : [];
 
   return (
     <DashboardLayout

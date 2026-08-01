@@ -5,7 +5,7 @@ import { listNotificationsForUser } from "@/lib/store/notifications";
 
 export default async function AdminProfilePage() {
   const user = await getCurrentUser();
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const notifications = user ? await listNotificationsForUser(user.userId) : [];
 
   return (
     <DashboardLayout

@@ -1,137 +1,268 @@
-import { db, nextId } from "./db";
+import { createClient } from "@/lib/supabase/server";
+import { isInvalidIdError } from "./db-errors";
 import type { Batch, BatchTutorAssignment, Course, StudentCategory } from "./types";
 
-export function listCourses(): Course[] {
-  return db.courses;
+function mapCourse(row: {
+  id: string;
+  name: string;
+  tagline: string;
+  duration_months: number;
+  highlights: string[];
+}): Course {
+  return {
+    id: row.id,
+    name: row.name,
+    tagline: row.tagline,
+    durationMonths: row.duration_months,
+    highlights: row.highlights,
+  };
 }
 
-export function getCourse(id: string): Course | undefined {
-  return db.courses.find((c) => c.id === id);
+export async function listCourses(): Promise<Course[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("courses").select("*").order("name");
+  if (error) throw error;
+  return data.map(mapCourse);
 }
 
-export function addCourse(input: {
+export async function getCourse(id: string): Promise<Course | undefined> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("courses").select("*").eq("id", id).maybeSingle();
+  if (error) {
+    if (isInvalidIdError(error)) return undefined;
+    throw error;
+  }
+  return data ? mapCourse(data) : undefined;
+}
+
+export async function addCourse(input: {
   name: string;
   tagline: string;
   durationMonths: number;
   highlights: string[];
-}): Course {
-  const course: Course = {
-    id: nextId("c"),
-    name: input.name,
-    tagline: input.tagline,
-    durationMonths: input.durationMonths,
-    highlights: input.highlights,
+}): Promise<Course> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("courses")
+    .insert({ name: input.name, tagline: input.tagline, duration_months: input.durationMonths, highlights: input.highlights })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapCourse(data);
+}
+
+export async function removeCourse(id: string): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("courses").delete().eq("id", id);
+  if (error) throw error;
+}
+
+async function mapBatch(
+  row: {
+    id: string;
+    name: string;
+    course_id: string;
+    student_category: StudentCategory;
+    start_date: string;
+    daily_time: string;
+    capacity: number;
+  },
+  courseNamesById: Map<string, string>,
+): Promise<Batch> {
+  return {
+    id: row.id,
+    name: row.name,
+    courseId: row.course_id,
+    course: courseNamesById.get(row.course_id) ?? "",
+    studentCategory: row.student_category,
+    startDate: row.start_date,
+    dailyTime: row.daily_time,
+    capacity: row.capacity,
   };
-  db.courses.push(course);
-  return course;
 }
 
-export function removeCourse(id: string): void {
-  db.courses = db.courses.filter((c) => c.id !== id);
+async function courseNameLookup(supabase: Awaited<ReturnType<typeof createClient>>): Promise<Map<string, string>> {
+  const { data, error } = await supabase.from("courses").select("id, name");
+  if (error) throw error;
+  return new Map(data.map((c) => [c.id, c.name]));
 }
 
-export function listBatches(): Batch[] {
-  return db.batches;
+export async function listBatches(): Promise<Batch[]> {
+  const supabase = await createClient();
+  const [{ data, error }, courseNames] = await Promise.all([
+    supabase.from("batches").select("*").order("name"),
+    courseNameLookup(supabase),
+  ]);
+  if (error) throw error;
+  return Promise.all(data.map((row) => mapBatch(row, courseNames)));
 }
 
-export function getBatch(id: string): Batch | undefined {
-  return db.batches.find((b) => b.id === id);
+export async function getBatch(id: string): Promise<Batch | undefined> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("batches").select("*").eq("id", id).maybeSingle();
+  if (error) {
+    if (isInvalidIdError(error)) return undefined;
+    throw error;
+  }
+  if (!data) return undefined;
+  const courseNames = await courseNameLookup(supabase);
+  return mapBatch(data, courseNames);
 }
 
-export function listBatchesByTutor(tutorId: string): Batch[] {
-  const batchIds = new Set(db.batchTutors.filter((bt) => bt.tutorId === tutorId).map((bt) => bt.batchId));
-  return db.batches.filter((b) => batchIds.has(b.id));
+export async function listBatchesByTutor(tutorId: string): Promise<Batch[]> {
+  const supabase = await createClient();
+  const { data: assignments, error: assignmentsError } = await supabase
+    .from("batch_tutors")
+    .select("batch_id")
+    .eq("tutor_id", tutorId);
+  if (assignmentsError) throw assignmentsError;
+  const batchIds = [...new Set(assignments.map((a) => a.batch_id))];
+  if (batchIds.length === 0) return [];
+
+  const [{ data, error }, courseNames] = await Promise.all([
+    supabase.from("batches").select("*").in("id", batchIds).order("name"),
+    courseNameLookup(supabase),
+  ]);
+  if (error) throw error;
+  return Promise.all(data.map((row) => mapBatch(row, courseNames)));
 }
 
-export function listBatchTutors(batchId: string): BatchTutorAssignment[] {
-  return db.batchTutors.filter((bt) => bt.batchId === batchId);
+async function tutorNameLookup(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  tutorIds: string[],
+): Promise<Map<string, string>> {
+  if (tutorIds.length === 0) return new Map();
+  const { data, error } = await supabase.from("profiles").select("id, full_name").in("id", tutorIds);
+  if (error) throw error;
+  return new Map(data.map((p) => [p.id, p.full_name ?? ""]));
+}
+
+export async function listBatchTutors(batchId: string): Promise<BatchTutorAssignment[]> {
+  if (!batchId) return [];
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("batch_tutors").select("*").eq("batch_id", batchId);
+  if (error) throw error;
+  const tutorNames = await tutorNameLookup(supabase, data.map((bt) => bt.tutor_id));
+  return data.map((bt) => ({
+    id: bt.id,
+    batchId: bt.batch_id,
+    subject: bt.subject,
+    tutorId: bt.tutor_id,
+    tutorName: tutorNames.get(bt.tutor_id) ?? "",
+  }));
 }
 
 // The subjects a specific tutor is assigned to teach within one batch —
 // scopes what they're allowed to schedule a class for in that batch.
-export function subjectsForTutorInBatch(tutorId: string, batchId: string): string[] {
-  return db.batchTutors.filter((bt) => bt.batchId === batchId && bt.tutorId === tutorId).map((bt) => bt.subject);
+export async function subjectsForTutorInBatch(tutorId: string, batchId: string): Promise<string[]> {
+  if (!batchId) return [];
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("batch_tutors")
+    .select("subject")
+    .eq("batch_id", batchId)
+    .eq("tutor_id", tutorId);
+  if (error) throw error;
+  return data.map((row) => row.subject);
 }
 
-export function batchTutorSummary(batchId: string): string {
-  const assignments = listBatchTutors(batchId);
+export async function batchTutorSummary(batchId: string): Promise<string> {
+  const assignments = await listBatchTutors(batchId);
   if (assignments.length === 0) return "Unassigned";
   return assignments.map((bt) => `${bt.subject} — ${bt.tutorName}`).join(", ");
 }
 
-export function listBatchesByCourse(courseId: string): Batch[] {
-  return db.batches.filter((b) => b.courseId === courseId);
+export async function listBatchesByCourse(courseId: string): Promise<Batch[]> {
+  const supabase = await createClient();
+  const [{ data, error }, courseNames] = await Promise.all([
+    supabase.from("batches").select("*").eq("course_id", courseId).order("name"),
+    courseNameLookup(supabase),
+  ]);
+  if (error) throw error;
+  return Promise.all(data.map((row) => mapBatch(row, courseNames)));
 }
 
 // Always derived from real enrollment — never stored — so it can't drift out
 // of sync with the actual student roster.
-export function getBatchFilledCount(batchId: string): number {
-  return db.students.filter((s) => s.batchId === batchId).length;
+export async function getBatchFilledCount(batchId: string): Promise<number> {
+  if (!batchId) return 0;
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("students")
+    .select("*", { count: "exact", head: true })
+    .eq("batch_id", batchId);
+  if (error) throw error;
+  return count ?? 0;
 }
 
-export function getCourseSeatsLeft(courseId: string): number {
-  return listBatchesByCourse(courseId).reduce(
-    (sum, batch) => sum + Math.max(0, batch.capacity - getBatchFilledCount(batch.id)),
-    0,
-  );
+export async function getCourseSeatsLeft(courseId: string): Promise<number> {
+  const batches = await listBatchesByCourse(courseId);
+  const counts = await Promise.all(batches.map((b) => getBatchFilledCount(b.id)));
+  return batches.reduce((sum, batch, i) => sum + Math.max(0, batch.capacity - counts[i]), 0);
 }
 
-export function addBatch(input: {
+export async function addBatch(input: {
   name: string;
   courseId: string;
   course: string;
   studentCategory: StudentCategory;
   capacity: number;
   dailyTime: string;
-}): Batch {
-  const batch: Batch = {
-    id: nextId("b"),
-    name: input.name,
-    courseId: input.courseId,
-    course: input.course,
-    studentCategory: input.studentCategory,
-    startDate: new Date().toISOString().slice(0, 10),
-    dailyTime: input.dailyTime,
-    capacity: input.capacity,
-  };
-  db.batches.push(batch);
-  return batch;
+}): Promise<Batch> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("batches")
+    .insert({
+      name: input.name,
+      course_id: input.courseId,
+      student_category: input.studentCategory,
+      daily_time: input.dailyTime,
+      capacity: input.capacity,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapBatch(data, new Map([[input.courseId, input.course]]));
 }
 
-export function firstOpenBatchForCourse(courseId: string): Batch | undefined {
-  return db.batches.find((b) => b.courseId === courseId && getBatchFilledCount(b.id) < b.capacity);
+export async function firstOpenBatchForCourse(courseId: string): Promise<Batch | undefined> {
+  const batches = await listBatchesByCourse(courseId);
+  for (const batch of batches) {
+    if ((await getBatchFilledCount(batch.id)) < batch.capacity) return batch;
+  }
+  return undefined;
 }
 
 // Registration matches on both course and student category (college-going vs
 // long-term) since the two categories run on different daily timings.
-export function firstOpenBatchForCourseAndCategory(
+export async function firstOpenBatchForCourseAndCategory(
   courseId: string,
   studentCategory: StudentCategory,
-): Batch | undefined {
-  return db.batches.find(
-    (b) => b.courseId === courseId && b.studentCategory === studentCategory && getBatchFilledCount(b.id) < b.capacity,
-  );
+): Promise<Batch | undefined> {
+  const batches = (await listBatchesByCourse(courseId)).filter((b) => b.studentCategory === studentCategory);
+  for (const batch of batches) {
+    if ((await getBatchFilledCount(batch.id)) < batch.capacity) return batch;
+  }
+  return undefined;
 }
 
 // Upserts the (batch, subject) assignment — a subject that's already taught
 // by someone else in this batch gets reassigned rather than duplicated.
-export function assignTutorToBatchSubject(
+export async function assignTutorToBatchSubject(
   batchId: string,
   subject: string,
   tutorId: string,
-  tutorName: string,
-): void {
-  const existing = db.batchTutors.find((bt) => bt.batchId === batchId && bt.subject === subject);
-  if (existing) {
-    existing.tutorId = tutorId;
-    existing.tutorName = tutorName;
-    return;
-  }
-  db.batchTutors.push({ id: nextId("bt"), batchId, subject, tutorId, tutorName });
+  _tutorName: string,
+): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("batch_tutors")
+    .upsert({ batch_id: batchId, subject, tutor_id: tutorId }, { onConflict: "batch_id,subject" });
+  if (error) throw error;
 }
 
-export function updateBatchDailyTime(batchId: string, dailyTime: string): void {
-  const batch = db.batches.find((b) => b.id === batchId);
-  if (!batch) return;
-  batch.dailyTime = dailyTime;
+export async function updateBatchDailyTime(batchId: string, dailyTime: string): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("batches").update({ daily_time: dailyTime }).eq("id", batchId);
+  if (error) throw error;
 }

@@ -261,6 +261,7 @@ export function AdminUsersClient({
                       <div className="space-y-2">
                         <Label>Batch</Label>
                         <Select
+                          items={batches.map((b) => ({ value: b.id, label: `${b.name} (${b.course})` }))}
                           value={newStudent.batchId}
                           onValueChange={(value) => setNewStudent({ ...newStudent, batchId: value ?? "" })}
                         >
@@ -491,7 +492,13 @@ export function AdminUsersClient({
                     <div className="space-y-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3">
                       <p className="text-sm font-medium text-destructive">No batch assigned yet</p>
                       <div className="flex gap-2">
-                        <Select value={assignBatchValue} onValueChange={(value) => setAssignBatchValue(value ?? "")}>
+                        <Select
+                          items={batches
+                            .filter((b) => b.courseId === detailStudent.courseId)
+                            .map((b) => ({ value: b.id, label: b.name }))}
+                          value={assignBatchValue}
+                          onValueChange={(value) => setAssignBatchValue(value ?? "")}
+                        >
                           <SelectTrigger className="flex-1">
                             <SelectValue placeholder="Choose a batch" />
                           </SelectTrigger>

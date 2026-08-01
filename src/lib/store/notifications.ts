@@ -1,60 +1,80 @@
-import { db, nextId } from "./db";
-import type { Notification, NotificationKind, UserRole } from "./types";
+import { createClient } from "@/lib/supabase/server";
+import type { Notification, NotificationKind } from "./types";
 
-export function listNotificationsForUser(userId: string): Notification[] {
-  return db.notifications
-    .filter((n) => n.userId === userId)
-    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+function mapNotification(row: {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  is_read: boolean;
+  kind: NotificationKind;
+  related_entity_id: string | null;
+  created_at: string;
+}): Notification {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    title: row.title,
+    message: row.message,
+    isRead: row.is_read,
+    createdAt: row.created_at,
+    kind: row.kind,
+    relatedEntityId: row.related_entity_id ?? undefined,
+  };
 }
 
-export function notifyUsers(
+export async function listNotificationsForUser(userId: string): Promise<Notification[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data.map(mapNotification);
+}
+
+// Fan-out insert targeting *other* users — goes through the notify_users()
+// security-definer RPC (see supabase/migrations/20260727120005_notifications.sql)
+// rather than a direct table insert, since no insert policy exists on
+// notifications for exactly that reason.
+export async function notifyUsers(
   userIds: string[],
   input: { title: string; message: string; kind?: NotificationKind; relatedEntityId?: string },
-): void {
-  const createdAt = new Date().toISOString().replace("T", " ").slice(0, 16);
-  for (const userId of userIds) {
-    const notification: Notification = {
-      id: nextId("notif"),
-      userId,
-      title: input.title,
-      message: input.message,
-      isRead: false,
-      createdAt,
-      kind: input.kind ?? "generic",
-      relatedEntityId: input.relatedEntityId,
-    };
-    db.notifications.unshift(notification);
-  }
+): Promise<void> {
+  if (userIds.length === 0) return;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("notify_users", {
+    target_user_ids: userIds,
+    p_title: input.title,
+    p_message: input.message,
+    p_kind: input.kind ?? "generic",
+    p_related_entity_id: input.relatedEntityId ?? null,
+  });
+  if (error) throw error;
 }
 
-export function markAllRead(userId: string): void {
-  for (const notification of db.notifications) {
-    if (notification.userId === userId) notification.isRead = true;
-  }
+// Fans out to every admin without the caller needing to know their user
+// ids (RLS blocks a non-admin from looking that up) — see notify_admins() in
+// supabase/migrations/20260727130001_notify_admins.sql.
+export async function notifyAdmins(input: {
+  title: string;
+  message: string;
+  kind?: NotificationKind;
+  relatedEntityId?: string;
+}): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("notify_admins", {
+    p_title: input.title,
+    p_message: input.message,
+    p_kind: input.kind ?? "generic",
+    p_related_entity_id: input.relatedEntityId ?? null,
+  });
+  if (error) throw error;
 }
 
-// Resolves where a notification should navigate to, per the viewing role —
-// the same notification kind can point at a different page depending on
-// whether a student, tutor, or admin is looking at it.
-export function notificationHref(notification: Notification, role: UserRole): string | undefined {
-  switch (notification.kind) {
-    case "issue":
-      if (role === "student") return "/student/issues";
-      if (role === "tutor") return "/tutor/communication";
-      return "/admin/issues";
-    case "material":
-      return role === "student" ? "/student/course" : "/tutor/materials";
-    case "class":
-      if (role === "student") return "/student/classes";
-      if (role === "tutor") return "/tutor/batches";
-      return "/admin/batches";
-    case "tutor_application":
-      return "/admin/users";
-    case "syllabus":
-      if (role === "student") return "/student/progress";
-      if (role === "tutor") return "/tutor/syllabus";
-      return "/admin/syllabus";
-    default:
-      return undefined;
-  }
+export async function markAllRead(userId: string): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("notifications").update({ is_read: true }).eq("user_id", userId);
+  if (error) throw error;
 }

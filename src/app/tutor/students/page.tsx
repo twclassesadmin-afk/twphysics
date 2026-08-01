@@ -8,10 +8,14 @@ import { TutorStudentsClient } from "./students-client";
 
 export default async function TutorStudentsPage() {
   const user = await getCurrentUser();
-  const myBatchIds = user ? listBatchesByTutor(user.userId).map((b) => b.id) : [];
-  const students = listStudents().filter((s) => myBatchIds.includes(s.batchId));
-  const issues = listIssues();
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const [myBatches, allStudents, issues, notifications] = await Promise.all([
+    user ? listBatchesByTutor(user.userId) : Promise.resolve([]),
+    listStudents(),
+    listIssues(),
+    user ? listNotificationsForUser(user.userId) : Promise.resolve([]),
+  ]);
+  const myBatchIds = myBatches.map((b) => b.id);
+  const students = allStudents.filter((s) => myBatchIds.includes(s.batchId));
 
   return (
     <DashboardLayout

@@ -18,15 +18,23 @@ import { ResetPasswordDialog } from "../reset-password-dialog";
 
 export default async function AdminTutorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const tutor = getTutor(id);
+  const tutor = await getTutor(id);
   if (!tutor) notFound();
 
   const user = await getCurrentUser();
-  const assignedBatches = listBatchesByTutor(tutor.id);
+  const assignedBatches = await listBatchesByTutor(tutor.id);
   const batchIds = assignedBatches.map((b) => b.id);
-  const students = listStudents().filter((s) => batchIds.includes(s.batchId));
-  const classesCompleted = countClassesCompletedForTutor(tutor.id);
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const allStudents = await listStudents();
+  const students = allStudents.filter((s) => batchIds.includes(s.batchId));
+  const classesCompleted = await countClassesCompletedForTutor(tutor.id);
+  const notifications = user ? await listNotificationsForUser(user.userId) : [];
+  const batches = await Promise.all(
+    assignedBatches.map(async (batch) => ({
+      ...batch,
+      filled: await getBatchFilledCount(batch.id),
+      teaching: (await subjectsForTutorInBatch(tutor.id, batch.id)).join(", "),
+    })),
+  );
 
   return (
     <DashboardLayout
@@ -77,7 +85,7 @@ export default async function AdminTutorDetailPage({ params }: { params: Promise
           <CardHeader>
             <CardTitle className="text-base">Assigned batches</CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-semibold">{assignedBatches.length}</CardContent>
+          <CardContent className="text-2xl font-semibold">{batches.length}</CardContent>
         </Card>
         <Card>
           <CardHeader>
@@ -98,23 +106,21 @@ export default async function AdminTutorDetailPage({ params }: { params: Promise
           <CardTitle>Batches</CardTitle>
         </CardHeader>
         <CardContent>
-          {assignedBatches.length === 0 ? (
+          {batches.length === 0 ? (
             <p className="text-sm text-muted-foreground">No batches assigned yet.</p>
           ) : (
             <>
               {/* Mobile card list */}
               <div className="space-y-2 sm:hidden">
-                {assignedBatches.map((batch) => (
+                {batches.map((batch) => (
                   <div key={batch.id} className="rounded-lg border p-3 text-sm">
                     <p className="font-medium">{batch.name}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {batch.course} · {batch.dailyTime}
                     </p>
+                    <p className="mt-1 text-xs text-muted-foreground">Teaching: {batch.teaching}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Teaching: {subjectsForTutorInBatch(tutor.id, batch.id).join(", ")}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {getBatchFilledCount(batch.id)}/{batch.capacity} filled
+                      {batch.filled}/{batch.capacity} filled
                     </p>
                   </div>
                 ))}
@@ -133,16 +139,14 @@ export default async function AdminTutorDetailPage({ params }: { params: Promise
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {assignedBatches.map((batch) => (
+                    {batches.map((batch) => (
                       <TableRow key={batch.id}>
                         <TableCell className="font-medium">{batch.name}</TableCell>
                         <TableCell className="text-muted-foreground">{batch.course}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {subjectsForTutorInBatch(tutor.id, batch.id).join(", ")}
-                        </TableCell>
+                        <TableCell className="text-muted-foreground">{batch.teaching}</TableCell>
                         <TableCell className="text-muted-foreground">{batch.dailyTime}</TableCell>
                         <TableCell>
-                          {getBatchFilledCount(batch.id)}/{batch.capacity}
+                          {batch.filled}/{batch.capacity}
                         </TableCell>
                       </TableRow>
                     ))}

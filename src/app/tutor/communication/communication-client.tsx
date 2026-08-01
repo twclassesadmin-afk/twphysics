@@ -72,7 +72,11 @@ export function TutorCommunicationClient({
         <CardContent className="space-y-3">
           <div className="space-y-2">
             <Label>Batch</Label>
-            <Select value={batchId} onValueChange={(value) => setBatchId(value ?? "")}>
+            <Select
+              items={batches.map((batch) => ({ value: batch.id, label: batch.name }))}
+              value={batchId}
+              onValueChange={(value) => setBatchId(value ?? "")}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

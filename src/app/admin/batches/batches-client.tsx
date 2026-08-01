@@ -377,6 +377,7 @@ export function AdminBatchesClient({
                 <div className="space-y-2">
                   <Label>Course</Label>
                   <Select
+                    items={courses.map((c) => ({ value: c.id, label: c.name }))}
                     value={newBatch.courseId}
                     onValueChange={(value) => setNewBatch({ ...newBatch, courseId: value ?? "" })}
                   >
@@ -395,6 +396,10 @@ export function AdminBatchesClient({
                 <div className="space-y-2">
                   <Label>Student category</Label>
                   <Select
+                    items={[
+                      { value: "college_going", label: "College-going" },
+                      { value: "long_term", label: "Long-term" },
+                    ]}
                     value={newBatch.studentCategory}
                     onValueChange={(value) =>
                       setNewBatch({ ...newBatch, studentCategory: (value as StudentCategory) ?? "college_going" })
@@ -595,7 +600,11 @@ export function AdminBatchesClient({
             </div>
             <div className="space-y-2">
               <Label>Tutor</Label>
-              <Select value={assignTutorId} onValueChange={(value) => setAssignTutorId(value ?? "")}>
+              <Select
+                items={tutorsForAssignSubject.map((t) => ({ value: t.id, label: t.fullName }))}
+                value={assignTutorId}
+                onValueChange={(value) => setAssignTutorId(value ?? "")}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a tutor" />
                 </SelectTrigger>

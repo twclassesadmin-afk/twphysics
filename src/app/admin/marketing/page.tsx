@@ -6,9 +6,9 @@ import { AdminMarketingClient } from "./marketing-client";
 
 export default async function AdminMarketingPage() {
   const user = await getCurrentUser();
-  const results = listResults();
-  const testimonials = listTestimonials();
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const results = await listResults();
+  const testimonials = await listTestimonials();
+  const notifications = user ? await listNotificationsForUser(user.userId) : [];
 
   return (
     <DashboardLayout

@@ -9,16 +9,14 @@ import { TutorCommunicationClient } from "./communication-client";
 
 export default async function TutorCommunicationPage() {
   const user = await getCurrentUser();
-  const batches = user ? listBatchesByTutor(user.userId) : [];
+  const batches = user ? await listBatchesByTutor(user.userId) : [];
   const batchIds = batches.map((b) => b.id);
-  const myStudentIds = listStudents()
-    .filter((s) => batchIds.includes(s.batchId))
-    .map((s) => s.id);
-  const issues = listIssues().filter(
-    (i) => i.raisedByRole === "student" && myStudentIds.includes(i.raisedById),
-  );
-  const broadcasts = user ? listBroadcastsByTutor(user.userId) : [];
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const allStudents = await listStudents();
+  const myStudentIds = allStudents.filter((s) => batchIds.includes(s.batchId)).map((s) => s.id);
+  const allIssues = await listIssues();
+  const issues = allIssues.filter((i) => i.raisedByRole === "student" && myStudentIds.includes(i.raisedById));
+  const broadcasts = user ? await listBroadcastsByTutor(user.userId) : [];
+  const notifications = user ? await listNotificationsForUser(user.userId) : [];
 
   return (
     <DashboardLayout

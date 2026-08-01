@@ -7,9 +7,11 @@ import { TutorSyllabusClient } from "./syllabus-client";
 
 export default async function TutorSyllabusPage() {
   const user = await getCurrentUser();
-  const batchIds = user ? listBatchesByTutor(user.userId).map((b) => b.id) : [];
-  const items = listSyllabus().filter((item) => batchIds.includes(item.batchId));
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const myBatches = user ? await listBatchesByTutor(user.userId) : [];
+  const batchIds = myBatches.map((b) => b.id);
+  const allItems = await listSyllabus();
+  const items = allItems.filter((item) => batchIds.includes(item.batchId));
+  const notifications = user ? await listNotificationsForUser(user.userId) : [];
 
   return (
     <DashboardLayout

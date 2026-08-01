@@ -7,9 +7,9 @@ import { TutorMaterialsClient } from "./materials-client";
 
 export default async function TutorMaterialsPage() {
   const user = await getCurrentUser();
-  const batches = user ? listBatchesByTutor(user.userId) : [];
-  const materials = listMaterialsByBatches(batches.map((b) => b.id));
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const batches = user ? await listBatchesByTutor(user.userId) : [];
+  const materials = await listMaterialsByBatches(batches.map((b) => b.id));
+  const notifications = user ? await listNotificationsForUser(user.userId) : [];
 
   return (
     <DashboardLayout

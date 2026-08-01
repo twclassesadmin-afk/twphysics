@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { setPasswordByLinkedId } from "@/lib/store/accounts";
+import { setUserPassword } from "@/lib/supabase/admin";
 
 export async function resetTutorPassword(
   tutorId: string,
@@ -10,7 +10,8 @@ export async function resetTutorPassword(
   if (newPassword.trim().length < 6) {
     return { ok: false, error: "Password must be at least 6 characters" };
   }
-  setPasswordByLinkedId(tutorId, newPassword);
+  const result = await setUserPassword(tutorId, newPassword);
+  if ("error" in result) return { ok: false, error: result.error };
   revalidatePath(`/admin/tutors/${tutorId}`);
   return { ok: true };
 }

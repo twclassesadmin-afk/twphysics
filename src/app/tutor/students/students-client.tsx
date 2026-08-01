@@ -276,7 +276,16 @@ export function TutorStudentsClient({ students, issues }: { students: Student[];
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Tag</Label>
-              <Select value={draftTag} onValueChange={(value) => setDraftTag(value as Tag)}>
+              <Select
+                items={[
+                  { value: "none", label: "No tag" },
+                  { value: "topper", label: "Topper" },
+                  { value: "weak", label: "Weak" },
+                  { value: "focus_needed", label: "Focus needed" },
+                ]}
+                value={draftTag}
+                onValueChange={(value) => setDraftTag(value as Tag)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

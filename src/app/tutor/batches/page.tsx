@@ -10,14 +10,25 @@ import { TutorBatchesClient } from "./batches-client";
 
 export default async function TutorBatchesPage() {
   const user = await getCurrentUser();
-  const batches = (user ? listBatchesByTutor(user.userId) : []).map((batch) => ({
-    ...batch,
-    studentCount: listStudentsByBatch(batch.id).length,
-    upcomingClasses: listClassesByBatch(batch.id).filter((c) => !hasEnded(c.scheduledAt, c.durationMinutes)),
-    mySubjects: user ? subjectsForTutorInBatch(user.userId, batch.id) : [],
-    syllabusTopics: listSyllabusByBatch(batch.id),
-  }));
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const rawBatches = user ? await listBatchesByTutor(user.userId) : [];
+  const notifications = user ? await listNotificationsForUser(user.userId) : [];
+  const batches = await Promise.all(
+    rawBatches.map(async (batch) => {
+      const [students, classes, mySubjects, syllabusTopics] = await Promise.all([
+        listStudentsByBatch(batch.id),
+        listClassesByBatch(batch.id),
+        user ? subjectsForTutorInBatch(user.userId, batch.id) : Promise.resolve([]),
+        listSyllabusByBatch(batch.id),
+      ]);
+      return {
+        ...batch,
+        studentCount: students.length,
+        upcomingClasses: classes.filter((c) => !hasEnded(c.scheduledAt, c.durationMinutes)),
+        mySubjects,
+        syllabusTopics,
+      };
+    }),
+  );
 
   return (
     <DashboardLayout

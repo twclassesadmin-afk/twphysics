@@ -21,7 +21,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2.5 font-serif text-lg font-bold tracking-tight text-foreground">
-          <Image src="/twlogo.jpeg" alt="TWPHYSICS" width={48} height={48} className="rounded-full" />
+          <Image src="/twlogo.jpeg" alt="TWPHYSICS" width={48} height={48} className="size-12 rounded-full" />
           TWPHYSICS
         </Link>
 
@@ -56,7 +56,7 @@ export function SiteHeader() {
           </SheetTrigger>
           <SheetContent side="right" className="w-72">
             <SheetTitle className="flex items-center gap-2.5 px-4 pt-4 font-serif text-lg font-bold">
-              <Image src="/twlogo.jpeg" alt="TWPHYSICS" width={32} height={32} className="rounded-full" />
+              <Image src="/twlogo.jpeg" alt="TWPHYSICS" width={32} height={32} className="size-8 rounded-full" />
               TWPHYSICS
             </SheetTitle>
             <nav className="flex flex-col gap-1 px-4 py-4">

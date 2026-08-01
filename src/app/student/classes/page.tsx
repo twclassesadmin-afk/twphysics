@@ -8,13 +8,14 @@ import { StudentClassesClient } from "./classes-client";
 
 export default async function StudentClassesPage() {
   const user = await getCurrentUser();
-  const student = user ? getStudent(user.userId) : undefined;
-  const classes = (student ? listClassesByBatch(student.batchId) : []).map((cls) => ({
+  const student = user ? await getStudent(user.userId) : undefined;
+  const rawClasses = student ? await listClassesByBatch(student.batchId) : [];
+  const classes = rawClasses.map((cls) => ({
     ...cls,
     started: hasStarted(cls.scheduledAt),
     ended: hasEnded(cls.scheduledAt, cls.durationMinutes),
   }));
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const notifications = user ? await listNotificationsForUser(user.userId) : [];
 
   return (
     <DashboardLayout

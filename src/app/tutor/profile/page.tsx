@@ -6,8 +6,8 @@ import { TutorProfileClient } from "./profile-client";
 
 export default async function TutorProfilePage() {
   const user = await getCurrentUser();
-  const tutor = user ? getTutor(user.userId) : undefined;
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const tutor = user ? await getTutor(user.userId) : undefined;
+  const notifications = user ? await listNotificationsForUser(user.userId) : [];
 
   return (
     <DashboardLayout

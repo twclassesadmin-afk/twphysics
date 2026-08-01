@@ -21,14 +21,14 @@ function initials(name: string) {
 
 export default async function StudentCoursePage() {
   const user = await getCurrentUser();
-  const student = user ? getStudent(user.userId) : undefined;
-  const batch = student ? getBatch(student.batchId) : undefined;
+  const student = user ? await getStudent(user.userId) : undefined;
+  const batch = student && student.batchId ? await getBatch(student.batchId) : undefined;
   const batchmates = student
-    ? listStudentsByBatch(student.batchId).filter((s) => s.id !== student.id)
+    ? (await listStudentsByBatch(student.batchId)).filter((s) => s.id !== student.id)
     : [];
-  const materials = student ? listMaterialsByBatch(student.batchId) : [];
-  const batchTutors = student ? listBatchTutors(student.batchId) : [];
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const materials = student ? await listMaterialsByBatch(student.batchId) : [];
+  const batchTutors = student ? await listBatchTutors(student.batchId) : [];
+  const notifications = user ? await listNotificationsForUser(user.userId) : [];
 
   return (
     <DashboardLayout

@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/get-current-user";
+import { createAuthUser, setUserPassword, getAuthUserByEmail } from "@/lib/supabase/admin";
 import { getTutorApplication, reviewTutorApplication, createTutorFromApplication } from "@/lib/store/tutors";
-import { createAccount, getAccountByEmail, setPasswordByLinkedId } from "@/lib/store/accounts";
 import { addStudent, assignStudentToBatch, getStudent } from "@/lib/store/students";
 import { getBatch } from "@/lib/store/batches";
 import { logActivity } from "@/lib/store/activity";
@@ -15,15 +15,22 @@ export async function approveTutorApplication(applicationId: string, initialPass
   if (initialPassword.trim().length < 6) {
     return { ok: false, error: "Password must be at least 6 characters" };
   }
-  const application = getTutorApplication(applicationId);
+  const application = await getTutorApplication(applicationId);
   if (!application) return { ok: false, error: "Application not found" };
   if (application.status !== "pending") return { ok: false, error: "Application already reviewed" };
 
+  const created = await createAuthUser({
+    email: application.email,
+    password: initialPassword,
+    fullName: application.fullName,
+    role: "tutor",
+  });
+  if ("error" in created) return { ok: false, error: created.error };
+
+  await createTutorFromApplication(created.id, application);
   const user = await getCurrentUser();
-  const tutor = createTutorFromApplication(application);
-  createAccount({ email: application.email, password: initialPassword, role: "tutor", linkedId: tutor.id });
-  reviewTutorApplication(applicationId, "approved", user?.fullName ?? "Admin");
-  logActivity(user?.fullName ?? "Admin", "Approved tutor application", application.fullName);
+  await reviewTutorApplication(applicationId, "approved", user?.userId ?? null);
+  await logActivity(user?.fullName ?? "Admin", "Approved tutor application", application.fullName);
 
   revalidatePath("/admin/users");
   revalidatePath("/admin/tutors");
@@ -31,10 +38,10 @@ export async function approveTutorApplication(applicationId: string, initialPass
 }
 
 export async function rejectTutorApplication(applicationId: string): Promise<ActionResult> {
-  const application = getTutorApplication(applicationId);
+  const application = await getTutorApplication(applicationId);
   if (!application) return { ok: false, error: "Application not found" };
   const user = await getCurrentUser();
-  reviewTutorApplication(applicationId, "rejected", user?.fullName ?? "Admin");
+  await reviewTutorApplication(applicationId, "rejected", user?.userId ?? null);
   revalidatePath("/admin/users");
   return { ok: true };
 }
@@ -53,31 +60,36 @@ export async function addStudentAction(input: {
   if (!input.name.trim()) return { ok: false, error: "Name is required" };
   if (!input.email.trim()) return { ok: false, error: "Email is required" };
   if (input.password.trim().length < 6) return { ok: false, error: "Password must be at least 6 characters" };
-  if (getAccountByEmail(input.email)) return { ok: false, error: "An account with this email already exists" };
-  const batch = getBatch(input.batchId);
+  const existing = await getAuthUserByEmail(input.email);
+  if (existing) return { ok: false, error: "An account with this email already exists" };
+  const batch = await getBatch(input.batchId);
   if (!batch) return { ok: false, error: "Select a batch" };
 
-  const student = addStudent({
-    name: input.name.trim(),
+  const created = await createAuthUser({
     email: input.email.trim(),
+    password: input.password,
+    fullName: input.name.trim(),
+    role: "student",
+  });
+  if ("error" in created) return { ok: false, error: created.error };
+
+  const student = await addStudent({
+    id: created.id,
     phone: input.phone,
     age: input.age || null,
     parentName: input.parentName,
     parentPhone: input.parentPhone,
     address: input.address,
     courseId: batch.courseId,
-    courseName: batch.course,
     batchId: batch.id,
-    batchName: batch.name,
   });
-  createAccount({ email: input.email.trim(), password: input.password, role: "student", linkedId: student.id });
-  notifyUsers([student.id], {
+  await notifyUsers([student.id], {
     title: "Welcome to TWPHYSICS!",
     message: `You're enrolled in ${batch.course} — ${batch.name} (${batch.dailyTime}).`,
   });
 
   const user = await getCurrentUser();
-  logActivity(user?.fullName ?? "Admin", "Added student manually", `${student.name} — ${batch.name}`);
+  await logActivity(user?.fullName ?? "Admin", "Added student manually", `${student.name} — ${batch.name}`);
 
   revalidatePath("/admin/users");
   revalidatePath("/admin/batches");
@@ -85,20 +97,20 @@ export async function addStudentAction(input: {
 }
 
 export async function assignStudentBatch(studentId: string, batchId: string): Promise<ActionResult> {
-  const student = getStudent(studentId);
+  const student = await getStudent(studentId);
   if (!student) return { ok: false, error: "Student not found" };
-  const batch = getBatch(batchId);
+  const batch = await getBatch(batchId);
   if (!batch) return { ok: false, error: "Batch not found" };
 
-  assignStudentToBatch(studentId, batch.id, batch.name, batch.courseId, batch.course);
-  notifyUsers([studentId], {
+  await assignStudentToBatch(studentId, batch.id, batch.name, batch.courseId, batch.course);
+  await notifyUsers([studentId], {
     title: "Batch assigned",
     message: `You've been placed in ${batch.name} (${batch.dailyTime}).`,
     kind: "class",
   });
 
   const user = await getCurrentUser();
-  logActivity(user?.fullName ?? "Admin", "Assigned batch", `${student.name} → ${batch.name}`);
+  await logActivity(user?.fullName ?? "Admin", "Assigned batch", `${student.name} → ${batch.name}`);
 
   revalidatePath("/admin/users");
   revalidatePath("/admin/batches");
@@ -109,7 +121,8 @@ export async function changeTutorPassword(tutorId: string, newPassword: string):
   if (newPassword.trim().length < 6) {
     return { ok: false, error: "Password must be at least 6 characters" };
   }
-  setPasswordByLinkedId(tutorId, newPassword);
+  const result = await setUserPassword(tutorId, newPassword);
+  if ("error" in result) return { ok: false, error: result.error };
   revalidatePath("/admin/tutors");
   return { ok: true };
 }

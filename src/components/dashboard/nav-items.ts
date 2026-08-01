@@ -13,6 +13,7 @@ import {
   LifeBuoy,
   TrendingUp,
   Globe,
+  CalendarCheck,
 } from "lucide-react";
 
 export type NavItem = {
@@ -36,6 +37,7 @@ export const ADMIN_NAV: NavItem[] = [
 export const TUTOR_NAV: NavItem[] = [
   { href: "/tutor", label: "Overview", icon: LayoutDashboard },
   { href: "/tutor/batches", label: "My Batches", icon: Layers },
+  { href: "/tutor/attendance", label: "Attendance", icon: CalendarCheck },
   { href: "/tutor/syllabus", label: "Syllabus", icon: ListChecks },
   { href: "/tutor/materials", label: "Study Material", icon: FolderOpen },
   { href: "/tutor/communication", label: "Communication", icon: MessageSquare },

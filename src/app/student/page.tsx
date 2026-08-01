@@ -15,20 +15,20 @@ import { hasEnded } from "@/lib/time-gate";
 
 export default async function StudentOverviewPage() {
   const user = await getCurrentUser();
-  const student = user ? getStudent(user.userId) : undefined;
+  const student = user ? await getStudent(user.userId) : undefined;
 
-  const upcomingClasses = student
-    ? listClassesByBatch(student.batchId).filter((c) => !hasEnded(c.scheduledAt, c.durationMinutes))
-    : [];
+  const rawClasses = student ? await listClassesByBatch(student.batchId) : [];
+  const upcomingClasses = rawClasses.filter((c) => !hasEnded(c.scheduledAt, c.durationMinutes));
   const nextClass = upcomingClasses[0];
 
-  const syllabusItems = student ? listSyllabusByBatch(student.batchId) : [];
+  const syllabusItems = student ? await listSyllabusByBatch(student.batchId) : [];
   const completedTopics = syllabusItems.filter((i) => i.status === "completed").length;
   const syllabusPct =
     syllabusItems.length === 0 ? 0 : Math.round((completedTopics / syllabusItems.length) * 100);
 
-  const latestBroadcast = student ? listBroadcastsByBatch(student.batchId)[0] : undefined;
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const broadcasts = student ? await listBroadcastsByBatch(student.batchId) : [];
+  const latestBroadcast = broadcasts[0];
+  const notifications = user ? await listNotificationsForUser(user.userId) : [];
 
   return (
     <DashboardLayout

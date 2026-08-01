@@ -19,19 +19,20 @@ export async function uploadMaterial(input: {
   if (!user || user.role !== "tutor") return { ok: false, error: "Not authorized" };
   if (!input.title.trim()) return { ok: false, error: "Title is required" };
   if (!input.url.trim()) return { ok: false, error: "PDF/link URL is required" };
-  const batch = getBatch(input.batchId);
+  const batch = await getBatch(input.batchId);
   if (!batch) return { ok: false, error: "Select a batch" };
 
-  addMaterial({
+  await addMaterial({
     batchId: batch.id,
     batchName: batch.name,
     title: input.title,
     type: input.type,
     url: input.url.trim(),
-    uploadedBy: user.fullName,
+    uploadedBy: user.userId,
   });
-  notifyUsers(
-    listStudentsByBatch(batch.id).map((s) => s.id),
+  const students = await listStudentsByBatch(batch.id);
+  await notifyUsers(
+    students.map((s) => s.id),
     { title: "New study material", message: `"${input.title}" was added to ${batch.name}.`, kind: "material" },
   );
 
@@ -44,7 +45,7 @@ export async function uploadMaterial(input: {
 export async function deleteMaterial(id: string): Promise<ActionResult> {
   const user = await getCurrentUser();
   if (!user || user.role !== "tutor") return { ok: false, error: "Not authorized" };
-  removeMaterial(id);
+  await removeMaterial(id);
   revalidatePath("/tutor/materials");
   revalidatePath("/student/course");
   return { ok: true };

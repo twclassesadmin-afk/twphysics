@@ -18,27 +18,26 @@ export async function createSyllabusTopic(input: {
   if (!input.topic.trim() || !input.subject.trim() || !input.deadline) {
     return { ok: false, error: "Fill in all fields" };
   }
-  const batch = getBatch(input.batchId);
+  const batch = await getBatch(input.batchId);
   if (!batch) return { ok: false, error: "Select a batch" };
 
-  addSyllabusItem({
+  await addSyllabusItem({
     batchId: batch.id,
     batchName: batch.name,
     topic: input.topic,
     subject: input.subject,
     deadline: input.deadline,
   });
-  const subjectTutorIds = listBatchTutors(batch.id)
-    .filter((bt) => bt.subject === input.subject)
-    .map((bt) => bt.tutorId);
+  const batchTutors = await listBatchTutors(batch.id);
+  const subjectTutorIds = batchTutors.filter((bt) => bt.subject === input.subject).map((bt) => bt.tutorId);
   if (subjectTutorIds.length > 0) {
-    notifyUsers(subjectTutorIds, {
+    await notifyUsers(subjectTutorIds, {
       title: "Syllabus updated",
       message: `New topic "${input.topic}" added to ${batch.name} (due ${input.deadline}).`,
       kind: "syllabus",
     });
   }
-  logActivity(user.fullName, "Added syllabus topic", `${input.topic} — ${batch.name}`);
+  await logActivity(user.fullName, "Added syllabus topic", `${input.topic} — ${batch.name}`);
 
   revalidatePath("/admin/syllabus");
   revalidatePath("/tutor/syllabus");

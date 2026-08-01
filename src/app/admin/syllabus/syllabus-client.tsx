@@ -82,6 +82,7 @@ export function AdminSyllabusClient({ items, batches }: { items: SyllabusItem[];
               <div className="space-y-2">
                 <Label>Batch</Label>
                 <Select
+                  items={batches.map((batch) => ({ value: batch.id, label: batch.name }))}
                   value={draft.batchId}
                   onValueChange={(value) => setDraft({ ...draft, batchId: value ?? "" })}
                 >

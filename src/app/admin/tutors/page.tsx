@@ -16,8 +16,11 @@ import { listNotificationsForUser } from "@/lib/store/notifications";
 
 export default async function AdminTutorsPage() {
   const user = await getCurrentUser();
-  const tutors = listTutors();
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const rawTutors = await listTutors();
+  const notifications = user ? await listNotificationsForUser(user.userId) : [];
+  const tutors = await Promise.all(
+    rawTutors.map(async (tutor) => ({ ...tutor, assignedBatches: await listBatchesByTutor(tutor.id) })),
+  );
 
   return (
     <DashboardLayout
@@ -39,24 +42,21 @@ export default async function AdminTutorsPage() {
             <>
               {/* Mobile card list */}
               <div className="space-y-2 sm:hidden">
-                {tutors.map((tutor) => {
-                  const assignedBatches = listBatchesByTutor(tutor.id);
-                  return (
-                    <Link
-                      key={tutor.id}
-                      href={`/admin/tutors/${tutor.id}`}
-                      className="block rounded-lg border p-3 text-sm"
-                    >
-                      <p className="font-medium">{tutor.fullName}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{tutor.subjects.join(", ")}</p>
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        {assignedBatches.length === 0
-                          ? "No batches assigned"
-                          : assignedBatches.map((b) => b.name).join(", ")}
-                      </p>
-                    </Link>
-                  );
-                })}
+                {tutors.map((tutor) => (
+                  <Link
+                    key={tutor.id}
+                    href={`/admin/tutors/${tutor.id}`}
+                    className="block rounded-lg border p-3 text-sm"
+                  >
+                    <p className="font-medium">{tutor.fullName}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{tutor.subjects.join(", ")}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {tutor.assignedBatches.length === 0
+                        ? "No batches assigned"
+                        : tutor.assignedBatches.map((b) => b.name).join(", ")}
+                    </p>
+                  </Link>
+                ))}
               </div>
 
               {/* Desktop table */}
@@ -71,28 +71,25 @@ export default async function AdminTutorsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {tutors.map((tutor) => {
-                      const assignedBatches = listBatchesByTutor(tutor.id);
-                      return (
-                        <TableRow key={tutor.id}>
-                          <TableCell>
-                            <Link
-                              href={`/admin/tutors/${tutor.id}`}
-                              className="font-medium underline-offset-4 hover:underline"
-                            >
-                              {tutor.fullName}
-                            </Link>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">{tutor.subjects.join(", ")}</TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {assignedBatches.length === 0
-                              ? "None"
-                              : assignedBatches.map((b) => b.name).join(", ")}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">{tutor.joinedAt}</TableCell>
-                        </TableRow>
-                      );
-                    })}
+                    {tutors.map((tutor) => (
+                      <TableRow key={tutor.id}>
+                        <TableCell>
+                          <Link
+                            href={`/admin/tutors/${tutor.id}`}
+                            className="font-medium underline-offset-4 hover:underline"
+                          >
+                            {tutor.fullName}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{tutor.subjects.join(", ")}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {tutor.assignedBatches.length === 0
+                            ? "None"
+                            : tutor.assignedBatches.map((b) => b.name).join(", ")}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{tutor.joinedAt}</TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </div>

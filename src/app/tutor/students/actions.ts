@@ -14,7 +14,7 @@ export async function tagStudent(
   if (!user || user.role !== "tutor") return { ok: false, error: "Not authorized" };
   if (tag === "none") return { ok: true };
 
-  addStudentFlag(studentId, {
+  await addStudentFlag(studentId, {
     type: tag,
     note,
     authorId: user.userId,

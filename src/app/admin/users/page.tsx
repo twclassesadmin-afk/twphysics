@@ -9,11 +9,13 @@ import { AdminUsersClient } from "./users-client";
 
 export default async function AdminUsersPage() {
   const user = await getCurrentUser();
-  const students = listStudents();
-  const batches = listBatches();
-  const applications = listTutorApplications();
-  const issues = listIssues();
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const [students, batches, applications, issues, notifications] = await Promise.all([
+    listStudents(),
+    listBatches(),
+    listTutorApplications(),
+    listIssues(),
+    user ? listNotificationsForUser(user.userId) : Promise.resolve([]),
+  ]);
 
   return (
     <DashboardLayout

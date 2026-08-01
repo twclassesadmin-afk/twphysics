@@ -10,7 +10,6 @@ import {
   updateBatchDailyTime,
 } from "@/lib/store/batches";
 import { listStudentsByBatch } from "@/lib/store/students";
-import { getAccountByLinkedId } from "@/lib/store/accounts";
 import { notifyUsers } from "@/lib/store/notifications";
 import { logActivity } from "@/lib/store/activity";
 import { getCurrentUser } from "@/lib/get-current-user";
@@ -30,7 +29,7 @@ export async function createCourse(input: {
   highlights: string[];
 }): Promise<ActionResult> {
   if (!input.name.trim()) return { ok: false, error: "Name is required" };
-  addCourse({ ...input, highlights: input.highlights.filter((h) => h.trim()) });
+  await addCourse({ ...input, highlights: input.highlights.filter((h) => h.trim()) });
   revalidatePath("/admin/batches");
   revalidatePath("/");
   return { ok: true };
@@ -45,7 +44,7 @@ export async function createBatch(input: {
   dailyTime: string;
 }): Promise<ActionResult> {
   if (!input.name.trim()) return { ok: false, error: "Name is required" };
-  addBatch(input);
+  await addBatch(input);
   revalidatePath("/admin/batches");
   revalidatePath("/");
   return { ok: true };
@@ -53,26 +52,22 @@ export async function createBatch(input: {
 
 export async function editBatchTiming(batchId: string, dailyTime: string): Promise<ActionResult> {
   if (!dailyTime.trim()) return { ok: false, error: "Timing is required" };
-  const batch = getBatch(batchId);
+  const batch = await getBatch(batchId);
   if (!batch) return { ok: false, error: "Batch not found" };
 
-  updateBatchDailyTime(batchId, dailyTime);
+  await updateBatchDailyTime(batchId, dailyTime);
 
-  const recipientIds = listStudentsByBatch(batchId)
-    .filter((s) => getAccountByLinkedId(s.id))
-    .map((s) => s.id);
-  const tutorIds = new Set(listBatchTutors(batchId).map((bt) => bt.tutorId));
-  for (const tutorId of tutorIds) {
-    if (getAccountByLinkedId(tutorId)) recipientIds.push(tutorId);
-  }
-  notifyUsers(recipientIds, {
+  const students = await listStudentsByBatch(batchId);
+  const tutors = await listBatchTutors(batchId);
+  const recipientIds = [...students.map((s) => s.id), ...new Set(tutors.map((bt) => bt.tutorId))];
+  await notifyUsers(recipientIds, {
     title: "Batch timing changed",
     message: `${batch.name}'s daily timing is now ${dailyTime}.`,
     kind: "class",
   });
 
   const user = await getCurrentUser();
-  logActivity(user?.fullName ?? "Admin", "Changed batch timing", `${batch.name} → ${dailyTime}`);
+  await logActivity(user?.fullName ?? "Admin", "Changed batch timing", `${batch.name} → ${dailyTime}`);
 
   revalidatePath("/admin/batches");
   revalidatePath("/tutor/batches");
@@ -86,21 +81,19 @@ export async function assignTutorToBatchSubject(
   tutorId: string,
   tutorName: string,
 ): Promise<ActionResult> {
-  const batch = getBatch(batchId);
+  const batch = await getBatch(batchId);
   if (!batch) return { ok: false, error: "Batch not found" };
   if (!subject.trim()) return { ok: false, error: "Select a subject" };
 
-  assignTutorToBatchSubjectStore(batchId, subject, tutorId, tutorName);
+  await assignTutorToBatchSubjectStore(batchId, subject, tutorId, tutorName);
 
-  const studentIdsWithAccounts = listStudentsByBatch(batchId)
-    .filter((s) => getAccountByLinkedId(s.id))
-    .map((s) => s.id);
-  notifyUsers(studentIdsWithAccounts, {
+  const students = await listStudentsByBatch(batchId);
+  await notifyUsers(students.map((s) => s.id), {
     title: "Tutor assigned",
     message: `${tutorName} is now teaching ${subject} for ${batch.name}.`,
   });
   const user = await getCurrentUser();
-  logActivity(user?.fullName ?? "Admin", "Assigned tutor", `${tutorName} → ${subject} — ${batch.name}`);
+  await logActivity(user?.fullName ?? "Admin", "Assigned tutor", `${tutorName} → ${subject} — ${batch.name}`);
 
   revalidatePath("/admin/batches");
   revalidatePath("/admin/tutors");
@@ -120,9 +113,9 @@ export async function createPricingTier(input: {
   if (input.batchSize < 1) return { ok: false, error: "Batch size must be at least 1" };
   if (input.monthlyFeeInr <= 0) return { ok: false, error: "Monthly fee is required" };
 
-  addPricingTier(input);
+  await addPricingTier(input);
   const user = await getCurrentUser();
-  logActivity(user?.fullName ?? "Admin", "Added pricing tier", `${input.label} — ₹${input.monthlyFeeInr}/mo`);
+  await logActivity(user?.fullName ?? "Admin", "Added pricing tier", `${input.label} — ₹${input.monthlyFeeInr}/mo`);
 
   revalidatePath("/admin/batches");
   revalidatePath("/");
@@ -143,10 +136,10 @@ export async function editPricingTier(
   if (patch.batchSize < 1) return { ok: false, error: "Batch size must be at least 1" };
   if (patch.monthlyFeeInr <= 0) return { ok: false, error: "Monthly fee is required" };
 
-  const updated = updatePricingTierStore(id, patch);
+  const updated = await updatePricingTierStore(id, patch);
   if (!updated) return { ok: false, error: "Pricing tier not found" };
   const user = await getCurrentUser();
-  logActivity(user?.fullName ?? "Admin", "Edited pricing tier", `${patch.label} — ₹${patch.monthlyFeeInr}/mo`);
+  await logActivity(user?.fullName ?? "Admin", "Edited pricing tier", `${patch.label} — ₹${patch.monthlyFeeInr}/mo`);
 
   revalidatePath("/admin/batches");
   revalidatePath("/");
@@ -154,9 +147,9 @@ export async function editPricingTier(
 }
 
 export async function deletePricingTier(id: string): Promise<ActionResult> {
-  removePricingTier(id);
+  await removePricingTier(id);
   const user = await getCurrentUser();
-  logActivity(user?.fullName ?? "Admin", "Removed pricing tier", id);
+  await logActivity(user?.fullName ?? "Admin", "Removed pricing tier", id);
 
   revalidatePath("/admin/batches");
   revalidatePath("/");

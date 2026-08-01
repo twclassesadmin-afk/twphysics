@@ -7,7 +7,8 @@ export default async function SignupPage({
   searchParams: Promise<{ course?: string }>;
 }) {
   const { course } = await searchParams;
-  const courses = listCourses().map((c) => ({ id: c.id, name: c.name }));
+  const allCourses = await listCourses();
+  const courses = allCourses.map((c) => ({ id: c.id, name: c.name }));
 
   return <SignupForm courses={courses} initialCourseId={course ?? ""} />;
 }

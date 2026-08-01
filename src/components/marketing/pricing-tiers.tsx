@@ -10,8 +10,8 @@ import { listPricingTiers } from "@/lib/store/pricing";
 // monthly — monthlyFeeInr is the unit rate a term is computed from.
 const YEARLY_TERM_MONTHS = 4;
 
-export function PricingTiers() {
-  const tiers = listPricingTiers();
+export async function PricingTiers() {
+  const tiers = await listPricingTiers();
 
   if (tiers.length === 0) return null;
 

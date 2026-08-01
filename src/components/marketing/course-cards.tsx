@@ -6,9 +6,14 @@ import { Button } from "@/components/ui/button";
 import { SectionHeading } from "./section-heading";
 import { Reveal } from "./reveal";
 import { listCourses, getCourseSeatsLeft } from "@/lib/store/batches";
+import { listPricingTiers } from "@/lib/store/pricing";
 
-export function CourseCards() {
-  const courses = listCourses();
+export async function CourseCards() {
+  const [rawCourses, pricingTiers] = await Promise.all([listCourses(), listPricingTiers()]);
+  const courses = await Promise.all(
+    rawCourses.map(async (course) => ({ ...course, seatsLeft: await getCourseSeatsLeft(course.id) })),
+  );
+  const startingFrom = pricingTiers.length > 0 ? Math.min(...pricingTiers.map((t) => t.monthlyFeeInr)) : null;
 
   return (
     <section id="courses" className="border-b bg-secondary/30 py-20 sm:py-28">
@@ -20,7 +25,7 @@ export function CourseCards() {
         />
         <div className="mt-14 grid gap-6 sm:grid-cols-2">
           {courses.map((course, i) => {
-            const seatsLeft = getCourseSeatsLeft(course.id);
+            const { seatsLeft } = course;
             return (
               <Reveal key={course.id} delay={i * 0.08}>
                 <Card className="flex h-full flex-col">
@@ -36,7 +41,21 @@ export function CourseCards() {
                     <p className="text-[15px] text-muted-foreground">{course.tagline}</p>
                   </CardHeader>
                   <CardContent className="flex-1 space-y-5">
-                    <p className="text-sm text-muted-foreground">{course.durationMonths}-month program</p>
+                    <div>
+                      <p className="text-sm text-muted-foreground">{course.durationMonths}-month program</p>
+                      {startingFrom !== null && (
+                        <p className="mt-1 text-sm">
+                          Starting from{" "}
+                          <span className="font-heading font-semibold text-foreground">
+                            &#8377;{startingFrom.toLocaleString("en-IN")}/mo
+                          </span>{" "}
+                          &middot;{" "}
+                          <a href="#fees" className="underline underline-offset-4">
+                            see batch sizes
+                          </a>
+                        </p>
+                      )}
+                    </div>
                     <ul className="space-y-2.5">
                       {course.highlights.map((highlight) => (
                         <li key={highlight} className="flex items-start gap-2.5 text-[15px]">

@@ -13,17 +13,22 @@ import { listNotificationsForUser } from "@/lib/store/notifications";
 
 export default async function AdminOverviewPage() {
   const user = await getCurrentUser();
-  const students = listStudents();
-  const tutors = listTutors();
-  const openIssues = listIssues().filter((i) => i.status !== "resolved");
-  const pendingApplications = listTutorApplications().filter((a) => a.status === "pending");
+  const [students, tutors, issues, applications, syllabus, notifications] = await Promise.all([
+    listStudents(),
+    listTutors(),
+    listIssues(),
+    listTutorApplications(),
+    listSyllabus(),
+    user ? listNotificationsForUser(user.userId) : Promise.resolve([]),
+  ]);
+  const openIssues = issues.filter((i) => i.status !== "resolved");
+  const pendingApplications = applications.filter((a) => a.status === "pending");
   const flaggedStudents = students.filter((s) => s.tag === "weak" || s.tag === "focus_needed");
   const behindBatches = new Set(
-    listSyllabus()
+    syllabus
       .filter((item) => item.status !== "completed" && new Date(item.deadline) < new Date())
       .map((item) => item.batchId),
   );
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
 
   const needsAttention = [
     flaggedStudents.length > 0 && {

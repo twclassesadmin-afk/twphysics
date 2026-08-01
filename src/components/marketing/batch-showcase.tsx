@@ -6,8 +6,11 @@ import { SectionHeading } from "./section-heading";
 import { Reveal } from "./reveal";
 import { listBatches, getBatchFilledCount } from "@/lib/store/batches";
 
-export function BatchShowcase() {
-  const batches = listBatches();
+export async function BatchShowcase() {
+  const rawBatches = await listBatches();
+  const batches = await Promise.all(
+    rawBatches.map(async (batch) => ({ ...batch, filled: await getBatchFilledCount(batch.id) })),
+  );
 
   return (
     <section id="batches" className="border-b bg-secondary/30 py-20 sm:py-28">
@@ -19,7 +22,7 @@ export function BatchShowcase() {
         />
         <div className="mt-14 grid gap-6 sm:grid-cols-3">
           {batches.map((batch, i) => {
-            const filled = getBatchFilledCount(batch.id);
+            const { filled } = batch;
             const seatsLeft = batch.capacity - filled;
             const fillPct = Math.round((filled / batch.capacity) * 100);
             return (

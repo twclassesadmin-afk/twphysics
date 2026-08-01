@@ -6,8 +6,8 @@ import { StudentIssuesClient } from "./issues-client";
 
 export default async function StudentIssuesPage() {
   const user = await getCurrentUser();
-  const issues = user ? listIssuesForUser(user.userId) : [];
-  const notifications = user ? listNotificationsForUser(user.userId) : [];
+  const issues = user ? await listIssuesForUser(user.userId) : [];
+  const notifications = user ? await listNotificationsForUser(user.userId) : [];
 
   return (
     <DashboardLayout

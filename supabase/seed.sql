@@ -1,0 +1,8 @@
+-- This project's demo data depends on real Supabase Auth users (tutors and
+-- students extend `profiles`, which is 1:1 with `auth.users`), and plain SQL
+-- cannot create auth.users rows — that requires the Admin API.
+--
+-- Seeding is done instead by `node scripts/seed-demo-data.mjs`, which creates
+-- the demo auth users (idempotently) and then inserts all dependent rows
+-- (courses, batches, tutors, students, classes, etc.) using the service-role
+-- key. Run it once against a fresh project: `node scripts/seed-demo-data.mjs`.

@@ -126,7 +126,11 @@ export function SignupForm({
 
           <div className="space-y-2">
             <Label>Course</Label>
-            <Select value={courseId} onValueChange={(value) => setCourseId(value ?? "")}>
+            <Select
+              items={courses.map((course) => ({ value: course.id, label: course.name }))}
+              value={courseId}
+              onValueChange={(value) => setCourseId(value ?? "")}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>

@@ -79,6 +79,7 @@ export function TutorMaterialsClient({
               <div className="space-y-2">
                 <Label>Batch</Label>
                 <Select
+                  items={batches.map((batch) => ({ value: batch.id, label: batch.name }))}
                   value={draft.batchId}
                   onValueChange={(value) => setDraft({ ...draft, batchId: value ?? "" })}
                 >
@@ -105,6 +106,10 @@ export function TutorMaterialsClient({
               <div className="space-y-2">
                 <Label>Type</Label>
                 <Select
+                  items={[
+                    { value: "pdf", label: "PDF / Notes" },
+                    { value: "link", label: "Link" },
+                  ]}
                   value={draft.type}
                   onValueChange={(value) => setDraft({ ...draft, type: (value as "pdf" | "link") ?? "pdf" })}
                 >

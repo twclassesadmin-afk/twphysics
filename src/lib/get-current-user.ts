@@ -1,12 +1,29 @@
-import { cookies } from "next/headers";
-import { SESSION_COOKIE_NAME, verifySessionCookieValue, type SessionPayload } from "./session";
+import { createClient } from "@/lib/supabase/server";
+import type { UserRole } from "@/lib/roles";
 
-// Parallel to the untouched src/lib/get-profile.ts (the real Supabase path,
-// kept intact for the eventual swap-back). When Supabase Auth lands, this
-// file's body gets replaced with getCurrentProfile()'s body and callers don't
-// change (same return shape).
+export type SessionPayload = {
+  userId: string;
+  role: UserRole;
+  email: string;
+  fullName: string;
+};
+
 export async function getCurrentUser(): Promise<SessionPayload | null> {
-  const store = await cookies();
-  const raw = store.get(SESSION_COOKIE_NAME)?.value;
-  return raw ? verifySessionCookieValue(raw) : null;
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, role")
+    .eq("id", auth.user.id)
+    .single();
+  if (!profile) return null;
+
+  return {
+    userId: auth.user.id,
+    role: profile.role,
+    email: auth.user.email ?? "",
+    fullName: profile.full_name ?? "",
+  };
 }
