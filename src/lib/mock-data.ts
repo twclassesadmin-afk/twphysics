@@ -35,13 +35,6 @@ export const notifications = [
   { id: "n5", title: "Payment receipt", message: "Payment of ₹24,999 received for NEET enrollment.", isRead: true, createdAt: "2025-08-01 10:15" },
 ];
 
-export const liveStats = {
-  studentsEnrolled: 8420,
-  classesConducted: 15230,
-  avgRankImprovement: 1840,
-  activeBatches: 32,
-};
-
 export const howItWorks = [
   { step: 1, title: "Register", description: "Share your details and pick a course to get started." },
   { step: 2, title: "Get Batch & Tutor", description: "You're assigned a batch and a dedicated subject-wise tutor team." },

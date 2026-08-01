@@ -25,14 +25,14 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       : "Welcome back to TWPHYSICS";
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Log in</CardTitle>
-        <CardDescription>{portalLabel}</CardDescription>
+    <Card className="shadow-xl shadow-foreground/5 ring-foreground/10">
+      <CardHeader className="pb-2">
+        <CardTitle className="font-heading text-2xl font-semibold tracking-tight">Log in</CardTitle>
+        <CardDescription className="text-[15px]">{portalLabel}</CardDescription>
       </CardHeader>
       <form action={formAction}>
         <input type="hidden" name="redirectTo" value={redirectTo} />
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-2">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input id="email" name="email" type="email" autoComplete="email" required />
@@ -49,8 +49,8 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
           </div>
           {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
         </CardContent>
-        <CardFooter className="flex flex-col gap-4">
-          <Button type="submit" className="w-full" disabled={pending}>
+        <CardFooter className="flex flex-col gap-4 border-t bg-transparent">
+          <Button type="submit" size="lg" className="w-full" disabled={pending}>
             {pending ? "Logging in..." : "Log in"}
           </Button>
           {!isStaffLogin && (

@@ -55,10 +55,12 @@ export function SignupForm({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Student registration</CardTitle>
-        <CardDescription>Tell us about the student — you&apos;ll be placed in a batch right away.</CardDescription>
+    <Card className="shadow-xl shadow-foreground/5 ring-foreground/10">
+      <CardHeader className="pb-2">
+        <CardTitle className="font-heading text-2xl font-semibold tracking-tight">Student registration</CardTitle>
+        <CardDescription className="text-[15px]">
+          Tell us about the student — you&apos;ll be placed in a batch right away.
+        </CardDescription>
       </CardHeader>
       <form action={formAction}>
         <input type="hidden" name="courseId" value={courseId} />
@@ -70,7 +72,7 @@ export function SignupForm({
           <input key={exam} type="hidden" name="targetExams" value={exam} />
         ))}
 
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-2">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="fullName">Student name</Label>
@@ -236,9 +238,9 @@ export function SignupForm({
             </>
           )}
         </CardContent>
-        <CardFooter className="flex flex-col gap-4">
+        <CardFooter className="flex flex-col gap-4 border-t bg-transparent">
           {learningMode === "online" && (
-            <Button type="submit" className="w-full" disabled={pending || targetExams.length === 0}>
+            <Button type="submit" size="lg" className="w-full" disabled={pending || targetExams.length === 0}>
               {pending ? "Registering..." : "Register"}
             </Button>
           )}

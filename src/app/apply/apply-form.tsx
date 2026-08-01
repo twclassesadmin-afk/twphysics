@@ -28,14 +28,14 @@ export function ApplyForm() {
 
   if (state && "success" in state) {
     return (
-      <Card>
+      <Card className="shadow-xl shadow-foreground/5 ring-foreground/10">
         <CardHeader>
-          <CardTitle>Application received</CardTitle>
-          <CardDescription>
+          <CardTitle className="font-heading text-2xl font-semibold tracking-tight">Application received</CardTitle>
+          <CardDescription className="text-[15px]">
             Thanks for applying — our admin team will review your details and reach out if it&apos;s a fit.
           </CardDescription>
         </CardHeader>
-        <CardFooter>
+        <CardFooter className="border-t bg-transparent">
           <Link href="/" className="text-sm underline underline-offset-4">
             &larr; Back to home
           </Link>
@@ -45,17 +45,19 @@ export function ApplyForm() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Apply to teach</CardTitle>
-        <CardDescription>Tell us about yourself — our admin team reviews every application.</CardDescription>
+    <Card className="shadow-xl shadow-foreground/5 ring-foreground/10">
+      <CardHeader className="pb-2">
+        <CardTitle className="font-heading text-2xl font-semibold tracking-tight">Apply to teach</CardTitle>
+        <CardDescription className="text-[15px]">
+          Tell us about yourself — our admin team reviews every application.
+        </CardDescription>
       </CardHeader>
       <form action={formAction}>
         {subjects.map((subject) => (
           <input key={subject} type="hidden" name="subjects" value={subject} />
         ))}
 
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-2">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="fullName">Full name</Label>
@@ -112,8 +114,8 @@ export function ApplyForm() {
 
           {state && "error" in state && <p className="text-sm text-destructive">{state.error}</p>}
         </CardContent>
-        <CardFooter className="flex flex-col gap-4">
-          <Button type="submit" className="w-full" disabled={pending || subjects.length === 0}>
+        <CardFooter className="flex flex-col gap-4 border-t bg-transparent">
+          <Button type="submit" size="lg" className="w-full" disabled={pending || subjects.length === 0}>
             {pending ? "Submitting..." : "Submit application"}
           </Button>
           <Link href="/" className="text-sm text-muted-foreground underline underline-offset-4">

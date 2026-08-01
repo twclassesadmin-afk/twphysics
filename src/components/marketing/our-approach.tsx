@@ -36,8 +36,8 @@ export function OurApproach() {
         <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {PILLARS.map((pillar) => (
             <div key={pillar.title} className="group relative">
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-foreground">
-                <pillar.icon className="size-6 text-background" strokeWidth={2} />
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/20 transition-transform duration-300 group-hover:scale-105">
+                <pillar.icon className="size-6 text-primary-foreground" strokeWidth={2} />
               </div>
               <h3 className="mt-5 font-heading text-lg font-semibold tracking-tight">
                 {pillar.title}

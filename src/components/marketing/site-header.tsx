@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 
 const NAV_LINKS = [
@@ -18,7 +19,7 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-lg backdrop-saturate-150 supports-[backdrop-filter]:bg-background/65">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2.5 font-serif text-lg font-bold tracking-tight text-foreground">
           <Image src="/twlogo.jpeg" alt="TWPHYSICS" width={48} height={48} className="size-12 rounded-full" />
@@ -41,9 +42,9 @@ export function SiteHeader() {
           <Button render={<Link href="/login" />} variant="ghost" size="sm">
             Student Login
           </Button>
-          <Button render={<Link href="/signup" />} size="sm">
+          <CtaButton href="/signup" className="py-1.5 pl-4">
             Register Now
-          </Button>
+          </CtaButton>
         </div>
 
         <Sheet open={open} onOpenChange={setOpen}>

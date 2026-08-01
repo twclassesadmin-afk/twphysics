@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/marketing/site-header";
 import { Hero } from "@/components/marketing/hero";
+import { SubjectsOrbit } from "@/components/marketing/subjects-orbit";
 import { StatsBar } from "@/components/marketing/stats-bar";
 import { OurApproach } from "@/components/marketing/our-approach";
 import { CourseCards } from "@/components/marketing/course-cards";
@@ -18,6 +19,7 @@ export default function Home() {
       <SiteHeader />
       <main className="flex-1">
         <Hero />
+        <SubjectsOrbit />
         <StatsBar />
         <OurApproach />
         <CourseCards />
