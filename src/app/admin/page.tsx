@@ -1,6 +1,7 @@
 import { Users, GraduationCap, AlertCircle, Flag, ListChecks, ArrowRight } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import { StatCard } from "@/components/dashboard/stat-card";
+import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -64,6 +65,17 @@ export default async function AdminOverviewPage() {
       pageTitle="Overview"
       notifications={notifications}
     >
+      <WelcomeBanner
+        eyebrow="Admin dashboard"
+        title={`Welcome, ${(user?.fullName ?? "Admin").split(" ")[0]}`}
+        description={
+          needsAttention.length > 0
+            ? `${needsAttention.length} area${needsAttention.length === 1 ? " needs" : "s need"} your attention today — see the list below.`
+            : "Everything is on track today. No flagged students, overdue syllabus or open issues."
+        }
+        image="/illustrations/laptop-desk.jpg"
+      />
+
       <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-3">
         <StatCard label="Total Students" value={students.length} icon={Users} />
         <StatCard label="Active Tutors" value={tutors.length} icon={GraduationCap} />

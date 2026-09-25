@@ -1,3 +1,4 @@
+import { SITE_CONTACT } from "@/lib/site-config";
 import Link from "next/link";
 import Image from "next/image";
 import { Phone, Mail, MapPin } from "lucide-react";
@@ -24,13 +25,15 @@ export function SiteFooter() {
 
         <div className="space-y-2 text-sm text-background/70">
           <p className="flex items-center gap-2">
-            <MapPin className="size-4 shrink-0" /> Hyderabad, Telangana, India
+            <MapPin className="size-4 shrink-0" /> {SITE_CONTACT.location}
           </p>
           <p className="flex items-center gap-2">
-            <Phone className="size-4 shrink-0" /> +91 90000 00000
+            <Phone className="size-4 shrink-0" />
+            <a href={SITE_CONTACT.phoneHref} className="hover:text-background">{SITE_CONTACT.phoneDisplay}</a>
           </p>
           <p className="flex items-center gap-2">
-            <Mail className="size-4 shrink-0" /> support@twphysics.example
+            <Mail className="size-4 shrink-0" />
+            <a href={`mailto:${SITE_CONTACT.email}`} className="hover:text-background">{SITE_CONTACT.email}</a>
           </p>
         </div>
 

@@ -1,9 +1,11 @@
+import { SITE_CONTACT } from "@/lib/site-config";
+
 // Official WhatsApp glyph (Simple Icons) on the brand green, so it reads as
 // WhatsApp at a glance rather than a generic chat bubble.
 export function WhatsappButton() {
   return (
     <a
-      href="https://wa.me/919000000000"
+      href={SITE_CONTACT.whatsappHref}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with us on WhatsApp"

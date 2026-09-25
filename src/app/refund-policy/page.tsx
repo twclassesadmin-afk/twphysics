@@ -1,3 +1,4 @@
+import { SITE_CONTACT } from "@/lib/site-config";
 import { LegalPage } from "@/components/marketing/legal-page";
 
 export default function RefundPolicyPage() {
@@ -29,8 +30,8 @@ export default function RefundPolicyPage() {
       <section>
         <h2>How to request a refund</h2>
         <p>
-          Contact us at <span className="font-medium text-foreground">support@twphysics.example</span>{" "}
-          or <span className="font-medium text-foreground">+91 90000 00000</span> with your registered
+          Contact us at <span className="font-medium text-foreground">{SITE_CONTACT.email}</span>{" "}
+          or <span className="font-medium text-foreground">{SITE_CONTACT.phoneDisplay}</span> with your registered
           email and batch details. Approved refunds are processed to the original payment method
           within 7–10 business days.
         </p>

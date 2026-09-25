@@ -2,11 +2,14 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createAuthUser } from "@/lib/supabase/admin";
+import { createAuthUser, deleteAuthUser } from "@/lib/supabase/admin";
 import { loginSchema, signupSchema } from "@/lib/validations/auth";
 import { ROLE_HOME, isUserRole } from "@/lib/roles";
 import { addStudent } from "@/lib/store/students";
-import { getCourse, firstOpenBatchForCourseAndCategory } from "@/lib/store/batches";
+import {
+  getCourse,
+  firstOpenBatchForCourseAndCategory,
+} from "@/lib/store/batches";
 import { notifyUsers, notifyAdmins } from "@/lib/store/notifications";
 import { logActivity } from "@/lib/store/activity";
 
@@ -34,9 +37,26 @@ export async function login(
     return { error: "Invalid email or password" };
   }
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).single();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", data.user.id)
+    .single();
   const role = isUserRole(profile?.role) ? profile.role : "student";
-  redirect(redirectTo || ROLE_HOME[role]);
+  redirect(safeRedirect(redirectTo, ROLE_HOME[role]));
+}
+
+// redirectTo comes from the query string, so it's attacker-controllable
+// (e.g. /login?redirectTo=https://evil.site). Only follow it when it's a path
+// inside the user's own portal; anything else lands on their dashboard.
+function safeRedirect(target: string, home: string): string {
+  const isLocalPath =
+    target.startsWith("/") &&
+    !target.startsWith("//") &&
+    !target.includes("\\");
+  return isLocalPath && (target === home || target.startsWith(`${home}/`))
+    ? target
+    : home;
 }
 
 export async function signup(
@@ -80,7 +100,11 @@ export async function signup(
     role: "student",
   });
   if ("error" in created) {
-    return { error: created.error.includes("already been registered") ? "An account with this email already exists" : created.error };
+    return {
+      error: created.error.includes("already been registered")
+        ? "An account with this email already exists"
+        : created.error,
+    };
   }
 
   const supabase = await createClient();
@@ -89,48 +113,75 @@ export async function signup(
     password: parsed.data.password,
   });
   if (signInError) {
-    return { error: "Account created but sign-in failed — try logging in from the login page." };
+    await deleteAuthUser(created.id);
+    return {
+      error: "We couldn't finish creating your account. Please try again.",
+    };
   }
 
   // No hard-fail if every batch for this course+category is full — register
   // the student unassigned and let admin place them into a batch (or open a
   // new one) instead of turning them away at the door.
-  const batch = await firstOpenBatchForCourseAndCategory(course.id, parsed.data.studentCategory);
+  const batch = await firstOpenBatchForCourseAndCategory(
+    course.id,
+    parsed.data.studentCategory,
+  );
 
-  const student = await addStudent({
-    id: created.id,
-    phone: parsed.data.phone,
-    parentName: parsed.data.parentName,
-    parentPhone: parsed.data.parentPhone,
-    courseId: course.id,
-    batchId: batch?.id ?? "",
-    studentCategory: parsed.data.studentCategory,
-    stream: parsed.data.stream,
-    targetExams: parsed.data.targetExams,
-    learningMode: parsed.data.learningMode,
-    learningType: parsed.data.learningType,
-  });
-
-  if (batch) {
-    await notifyAdmins({
-      title: "New student registered",
-      message: `${student.name} registered for ${course.name} (${batch.name}).`,
+  let student: Awaited<ReturnType<typeof addStudent>>;
+  try {
+    student = await addStudent({
+      id: created.id,
+      phone: parsed.data.phone,
+      parentName: parsed.data.parentName,
+      parentPhone: parsed.data.parentPhone,
+      courseId: course.id,
+      batchId: batch?.id ?? "",
+      studentCategory: parsed.data.studentCategory,
+      stream: parsed.data.stream,
+      targetExams: parsed.data.targetExams,
+      learningMode: parsed.data.learningMode,
+      learningType: parsed.data.learningType,
     });
-    await notifyUsers([student.id], {
-      title: "Welcome to TWPHYSICS!",
-      message: `You're registered for ${course.name} — ${batch.name} (${batch.dailyTime}).`,
-    });
-  } else {
-    await notifyAdmins({
-      title: "Student needs a batch",
-      message: `${student.name} registered for ${course.name} but every matching batch is full — assign them a batch.`,
-    });
-    await notifyUsers([student.id], {
-      title: "Welcome to TWPHYSICS!",
-      message: `You're registered for ${course.name} — we'll confirm your batch and timing shortly.`,
-    });
+  } catch (err) {
+    // Roll back so the student can simply retry with the same email.
+    console.error("Student record insert failed during signup", err);
+    await supabase.auth.signOut();
+    await deleteAuthUser(created.id);
+    return {
+      error: "We couldn't finish creating your account. Please try again.",
+    };
   }
-  await logActivity(student.name, "Registered", `${course.name}${batch ? ` — ${batch.name}` : " — awaiting batch"}`);
+
+  // Registration is complete at this point — a failed notification or log
+  // write must not turn it into an error screen the student can't retry from.
+  try {
+    if (batch) {
+      await notifyAdmins({
+        title: "New student registered",
+        message: `${student.name} registered for ${course.name} (${batch.name}).`,
+      });
+      await notifyUsers([student.id], {
+        title: "Welcome to TWPHYSICS!",
+        message: `You're registered for ${course.name} — ${batch.name} (${batch.dailyTime}).`,
+      });
+    } else {
+      await notifyAdmins({
+        title: "Student needs a batch",
+        message: `${student.name} registered for ${course.name} but every matching batch is full — assign them a batch.`,
+      });
+      await notifyUsers([student.id], {
+        title: "Welcome to TWPHYSICS!",
+        message: `You're registered for ${course.name} — we'll confirm your batch and timing shortly.`,
+      });
+    }
+    await logActivity(
+      student.name,
+      "Registered",
+      `${course.name}${batch ? ` — ${batch.name}` : " — awaiting batch"}`,
+    );
+  } catch (err) {
+    console.error("Post-signup notifications failed", err);
+  }
 
   redirect("/student");
 }

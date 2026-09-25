@@ -25,7 +25,7 @@ export default async function AdminProfilePage() {
           </div>
           <div className="rounded-lg border p-3">
             <p className="text-xs text-muted-foreground">Email</p>
-            <p className="text-sm font-medium">{user?.email ?? "admin@twphysics.example"}</p>
+            <p className="text-sm font-medium">{user?.email || "—"}</p>
           </div>
           <div className="rounded-lg border p-3">
             <p className="text-xs text-muted-foreground">Role</p>

@@ -3,7 +3,7 @@ import type { ResultEntry, Testimonial } from "./types";
 
 export async function listResults(): Promise<ResultEntry[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("results").select("*");
+  const { data, error } = await supabase.from("results").select("*").order("created_at", { ascending: false });
   if (error) throw error;
   return data;
 }
@@ -29,7 +29,7 @@ export async function removeResult(id: string): Promise<void> {
 
 export async function listTestimonials(): Promise<Testimonial[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("testimonials").select("*");
+  const { data, error } = await supabase.from("testimonials").select("*").order("created_at", { ascending: false });
   if (error) throw error;
   return data;
 }

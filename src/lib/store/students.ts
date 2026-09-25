@@ -111,6 +111,7 @@ async function hydrateStudents(supabase: SupabaseClient, rows: Record<string, un
       learning_type: LearningType | null;
       status: "active" | "expiring_soon";
       attendance_pct: number;
+      fee_paid?: boolean;
       tag: StudentTag;
       tag_note: string;
     };
@@ -135,6 +136,7 @@ async function hydrateStudents(supabase: SupabaseClient, rows: Record<string, un
       learningType: r.learning_type,
       status: r.status,
       attendancePct: r.attendance_pct,
+      feePaid: r.fee_paid ?? false,
       tag: r.tag,
       tagNote: r.tag_note,
       attendanceLog: attendanceLogs.get(r.id) ?? [],
@@ -232,6 +234,12 @@ export async function updateStudentContact(studentId: string, patch: { phone?: s
   if (patch.address !== undefined) update.address = patch.address;
   if (Object.keys(update).length === 0) return;
   const { error } = await supabase.from("students").update(update).eq("id", studentId);
+  if (error) throw error;
+}
+
+export async function setStudentFeePaid(studentId: string, feePaid: boolean): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("students").update({ fee_paid: feePaid }).eq("id", studentId);
   if (error) throw error;
 }
 

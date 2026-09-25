@@ -36,7 +36,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { Batch, Issue, Student, TutorApplication } from "@/lib/store/types";
-import { approveTutorApplication, rejectTutorApplication, addStudentAction, assignStudentBatch } from "./actions";
+import { approveTutorApplication, rejectTutorApplication, addStudentAction, assignStudentBatch, setFeePaid } from "./actions";
 
 const TAG_LABEL: Record<string, string> = {
   topper: "Topper",
@@ -134,6 +134,14 @@ export function AdminUsersClient({
       } else {
         toast.error(result.error);
       }
+    });
+  }
+
+  function toggleFee(studentId: string, paid: boolean) {
+    startTransition(async () => {
+      const result = await setFeePaid(studentId, paid);
+      if (result.ok) toast.success(paid ? "Marked as fee paid" : "Marked as fee pending");
+      else toast.error(result.error);
     });
   }
 
@@ -312,6 +320,7 @@ export function AdminUsersClient({
                         <p className="mt-0.5 text-xs text-muted-foreground">{student.batchName}</p>
                         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                           <span>{student.attendancePct}% attendance</span>
+                          <FeeBadge paid={student.feePaid} />
                           {student.tag && <Badge variant="outline">{TAG_LABEL[student.tag]}</Badge>}
                         </div>
                       </button>
@@ -327,6 +336,7 @@ export function AdminUsersClient({
                           <TableHead>Batch</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Attendance</TableHead>
+                          <TableHead>Fee</TableHead>
                           <TableHead>Tag</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -348,6 +358,9 @@ export function AdminUsersClient({
                               </Badge>
                             </TableCell>
                             <TableCell>{student.attendancePct}%</TableCell>
+                            <TableCell>
+                              <FeeBadge paid={student.feePaid} />
+                            </TableCell>
                             <TableCell>
                               {student.tag ? <Badge variant="outline">{TAG_LABEL[student.tag]}</Badge> : "—"}
                             </TableCell>
@@ -567,9 +580,25 @@ export function AdminUsersClient({
                 </TabsContent>
 
                 <TabsContent value="academic" className="mt-4 space-y-4">
-                  <div className="rounded-lg border p-3 text-sm">
-                    <p className="text-xs text-muted-foreground">Attendance</p>
-                    <p className="font-semibold">{detailStudent.attendancePct}%</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-lg border p-3 text-sm">
+                      <p className="text-xs text-muted-foreground">Attendance</p>
+                      <p className="font-semibold">{detailStudent.attendancePct}%</p>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 rounded-lg border p-3 text-sm">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Fee (collected offline)</p>
+                        <FeeBadge paid={detailStudent.feePaid} />
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={pending}
+                        onClick={() => toggleFee(detailStudent.id, !detailStudent.feePaid)}
+                      >
+                        {detailStudent.feePaid ? "Mark pending" : "Mark paid"}
+                      </Button>
+                    </div>
                   </div>
                   <div>
                     <p className="mb-2 text-sm font-medium">Attendance log</p>
@@ -716,5 +745,13 @@ export function AdminUsersClient({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function FeeBadge({ paid }: { paid: boolean }) {
+  return paid ? (
+    <Badge variant="secondary" className="bg-success/15 text-success">Fee paid</Badge>
+  ) : (
+    <Badge variant="outline">Fee pending</Badge>
   );
 }

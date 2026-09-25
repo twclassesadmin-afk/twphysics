@@ -1,6 +1,7 @@
 import { Layers, CalendarClock, ListChecks, MessageSquare, ArrowRight } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import { StatCard } from "@/components/dashboard/stat-card";
+import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -40,6 +41,18 @@ export default async function TutorOverviewPage() {
       pageTitle="Overview"
       notifications={notifications}
     >
+      <WelcomeBanner
+        eyebrow="Tutor dashboard"
+        title={`Good to see you, ${(user?.fullName ?? "Tutor").split(" ")[0]}`}
+        description={`You have ${upcomingClasses.length} upcoming class${upcomingClasses.length === 1 ? "" : "es"} and ${openIssues.length} open student doubt${openIssues.length === 1 ? "" : "s"} across your batches.`}
+        image="/illustrations/teaching-online.jpg"
+        action={
+          <Button size="sm" render={<Link href="/tutor/batches" />}>
+            My batches <ArrowRight className="size-4" />
+          </Button>
+        }
+      />
+
       <div className="grid grid-cols-2 gap-2.5 sm:gap-4 sm:grid-cols-3">
         <StatCard label="My Batches" value={batches.length} icon={Layers} />
         <StatCard label="Upcoming Classes" value={upcomingClasses.length} icon={CalendarClock} />

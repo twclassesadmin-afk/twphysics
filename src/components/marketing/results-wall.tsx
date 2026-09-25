@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { SectionHeading } from "./section-heading";
 import { Reveal } from "./reveal";
+import { ScrollRow } from "./scroll-row";
 import { listResults } from "@/lib/store/marketing";
 
 function initials(name: string) {
@@ -27,9 +28,13 @@ export async function ResultsWall() {
           title="Numbers our students are proud of"
           description="Real ranks, real scores — verified against admit cards at enrollment renewal."
         />
-        <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <ScrollRow label="Student results" className="mt-14">
           {results.map((result, i) => (
-            <Reveal key={result.id} delay={i * 0.06}>
+            <Reveal
+              key={result.id}
+              delay={Math.min(i, 3) * 0.06}
+              className="w-[78%] shrink-0 snap-start sm:w-[calc(50%-10px)] lg:w-[calc(25%-15px)]"
+            >
               <Card className="card-hover h-full rounded-2xl">
                 <CardContent className="flex flex-col items-center gap-2 pt-6 text-center">
                   <Avatar className="size-14">
@@ -49,7 +54,7 @@ export async function ResultsWall() {
               </Card>
             </Reveal>
           ))}
-        </div>
+        </ScrollRow>
       </div>
     </section>
   );

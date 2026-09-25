@@ -12,7 +12,7 @@ import {
 import { listStudentsByBatch } from "@/lib/store/students";
 import { notifyUsers } from "@/lib/store/notifications";
 import { logActivity } from "@/lib/store/activity";
-import { getCurrentUser } from "@/lib/get-current-user";
+import { getCurrentUser, requireRole } from "@/lib/get-current-user";
 import {
   addPricingTier,
   updatePricingTier as updatePricingTierStore,
@@ -28,6 +28,7 @@ export async function createCourse(input: {
   durationMonths: number;
   highlights: string[];
 }): Promise<ActionResult> {
+  if (!(await requireRole("admin"))) return { ok: false, error: "Not authorized" };
   if (!input.name.trim()) return { ok: false, error: "Name is required" };
   await addCourse({ ...input, highlights: input.highlights.filter((h) => h.trim()) });
   revalidatePath("/admin/batches");
@@ -43,6 +44,7 @@ export async function createBatch(input: {
   capacity: number;
   dailyTime: string;
 }): Promise<ActionResult> {
+  if (!(await requireRole("admin"))) return { ok: false, error: "Not authorized" };
   if (!input.name.trim()) return { ok: false, error: "Name is required" };
   await addBatch(input);
   revalidatePath("/admin/batches");
@@ -51,6 +53,7 @@ export async function createBatch(input: {
 }
 
 export async function editBatchTiming(batchId: string, dailyTime: string): Promise<ActionResult> {
+  if (!(await requireRole("admin"))) return { ok: false, error: "Not authorized" };
   if (!dailyTime.trim()) return { ok: false, error: "Timing is required" };
   const batch = await getBatch(batchId);
   if (!batch) return { ok: false, error: "Batch not found" };
@@ -81,6 +84,7 @@ export async function assignTutorToBatchSubject(
   tutorId: string,
   tutorName: string,
 ): Promise<ActionResult> {
+  if (!(await requireRole("admin"))) return { ok: false, error: "Not authorized" };
   const batch = await getBatch(batchId);
   if (!batch) return { ok: false, error: "Batch not found" };
   if (!subject.trim()) return { ok: false, error: "Select a subject" };
@@ -109,6 +113,7 @@ export async function createPricingTier(input: {
   daysPerSubjectPerMonth: number;
   monthlyFeeInr: number;
 }): Promise<ActionResult> {
+  if (!(await requireRole("admin"))) return { ok: false, error: "Not authorized" };
   if (!input.label.trim()) return { ok: false, error: "Label is required" };
   if (input.batchSize < 1) return { ok: false, error: "Batch size must be at least 1" };
   if (input.monthlyFeeInr <= 0) return { ok: false, error: "Monthly fee is required" };
@@ -132,6 +137,7 @@ export async function editPricingTier(
     monthlyFeeInr: number;
   },
 ): Promise<ActionResult> {
+  if (!(await requireRole("admin"))) return { ok: false, error: "Not authorized" };
   if (!patch.label.trim()) return { ok: false, error: "Label is required" };
   if (patch.batchSize < 1) return { ok: false, error: "Batch size must be at least 1" };
   if (patch.monthlyFeeInr <= 0) return { ok: false, error: "Monthly fee is required" };
@@ -147,6 +153,7 @@ export async function editPricingTier(
 }
 
 export async function deletePricingTier(id: string): Promise<ActionResult> {
+  if (!(await requireRole("admin"))) return { ok: false, error: "Not authorized" };
   await removePricingTier(id);
   const user = await getCurrentUser();
   await logActivity(user?.fullName ?? "Admin", "Removed pricing tier", id);

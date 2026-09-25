@@ -1,4 +1,5 @@
 import { AuthBrandPanel } from "@/components/auth/auth-brand-panel";
+import { PeekingBuddy } from "@/components/auth/peeking-buddy";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,7 +15,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           "Doubt-clearing within 24 hours",
         ]}
       />
-      <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-muted/20 px-4 py-10 sm:py-16">
+      {/* Not overflow-hidden: the peeking character's fingers wrap over the
+          brand panel's edge. xl:pl-32 keeps a lane free for it beside the card. */}
+      <div className="relative flex flex-1 items-center justify-center bg-muted/20 px-4 py-10 sm:py-16 xl:pr-8 xl:pl-32">
+        <PeekingBuddy />
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.035]"
           style={{

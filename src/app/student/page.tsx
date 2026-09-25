@@ -1,6 +1,7 @@
 import { CalendarClock, ListChecks, TrendingUp, ArrowRight } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import { StatCard } from "@/components/dashboard/stat-card";
+import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,22 @@ export default async function StudentOverviewPage() {
       pageTitle="Overview"
       notifications={notifications}
     >
+      <WelcomeBanner
+        eyebrow="Student dashboard"
+        title={`Welcome back, ${(user?.fullName ?? "Student").split(" ")[0]}`}
+        description={
+          nextClass
+            ? `Your next class is ${nextClass.subject}. Keep your streak going — every topic you close moves your progress bar.`
+            : "No class scheduled right now — a great time to revise and clear pending doubts."
+        }
+        image="/illustrations/student-science.jpg"
+        action={
+          <Button size="sm" render={<Link href="/student/classes" />}>
+            My classes <ArrowRight className="size-4" />
+          </Button>
+        }
+      />
+
       <div className="grid grid-cols-2 gap-2.5 sm:gap-4 sm:grid-cols-3">
         <StatCard
           label="Next Class"

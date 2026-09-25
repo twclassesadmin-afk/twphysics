@@ -1,6 +1,6 @@
  "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Video, NotebookPen, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,12 +17,19 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import type { ScheduledClass } from "@/lib/store/types";
-import { markAttendance } from "./actions";
+import { markAttendance, saveClassNote, deleteClassNote } from "./actions";
 
 type ClassWithGate = ScheduledClass & { started: boolean; ended: boolean };
 
-export function StudentClassesClient({ classes }: { classes: ClassWithGate[] }) {
-  const [notes, setNotes] = useState<Record<string, string>>({});
+export function StudentClassesClient({
+  classes,
+  initialNotes,
+}: {
+  classes: ClassWithGate[];
+  initialNotes: Record<string, string>;
+}) {
+  const [notes, setNotes] = useState<Record<string, string>>(initialNotes);
+  const [pending, startTransition] = useTransition();
   const [openClassId, setOpenClassId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
 
@@ -32,26 +39,45 @@ export function StudentClassesClient({ classes }: { classes: ClassWithGate[] }) 
   }
 
   function saveNote() {
-    if (!openClassId) return;
-    setNotes((prev) => ({ ...prev, [openClassId]: draft }));
-    toast.success("Note saved");
-    setOpenClassId(null);
+    const classId = openClassId;
+    if (!classId) return;
+    startTransition(async () => {
+      const result = await saveClassNote(classId, draft);
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+      setNotes((prev) => ({ ...prev, [classId]: draft.trim() }));
+      toast.success("Note saved");
+      setOpenClassId(null);
+    });
   }
 
   function deleteNote() {
-    if (!openClassId) return;
-    setNotes((prev) => {
-      const next = { ...prev };
-      delete next[openClassId];
-      return next;
+    const classId = openClassId;
+    if (!classId) return;
+    startTransition(async () => {
+      const result = await deleteClassNote(classId);
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+      setNotes((prev) => {
+        const next = { ...prev };
+        delete next[classId];
+        return next;
+      });
+      toast.success("Note deleted");
+      setOpenClassId(null);
     });
-    toast.success("Note deleted");
-    setOpenClassId(null);
   }
 
-  function handleJoin(cls: ClassWithGate) {
-    void markAttendance(cls.id);
+  async function handleJoin(cls: ClassWithGate) {
+    // Open synchronously (inside the click) so popup blockers allow it, then
+    // record attendance; surface a failure instead of swallowing it.
     window.open(cls.joinUrl, "_blank", "noopener,noreferrer");
+    const result = await markAttendance(cls.id);
+    if (!result.ok) toast.error(`Attendance not recorded: ${result.error}`);
   }
 
   const activeClass = classes.find((c) => c.id === openClassId);
@@ -125,7 +151,7 @@ export function StudentClassesClient({ classes }: { classes: ClassWithGate[] }) 
         />
         <DialogFooter className="sm:justify-between">
           {openClassId && notes[openClassId] ? (
-            <Button variant="ghost" className="text-destructive" onClick={deleteNote}>
+            <Button variant="ghost" className="text-destructive" onClick={deleteNote} disabled={pending}>
               <Trash2 /> Delete
             </Button>
           ) : (
@@ -133,7 +159,9 @@ export function StudentClassesClient({ classes }: { classes: ClassWithGate[] }) 
           )}
           <div className="flex gap-2">
             <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-            <Button onClick={saveNote}>Save Note</Button>
+            <Button onClick={saveNote} disabled={pending || !draft.trim()}>
+              {pending ? "Saving..." : "Save Note"}
+            </Button>
           </div>
         </DialogFooter>
       </DialogContent>

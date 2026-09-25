@@ -24,9 +24,15 @@ export async function TestimonialsGrid() {
   }
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    // Phones: one swipeable rail (a long vertical stack is tedious to scroll).
+    // sm+: a regular grid.
+    <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pt-2 pb-3 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:px-0 sm:pt-0 sm:pb-0 lg:grid-cols-3">
       {testimonials.map((testimonial, i) => (
-        <Reveal key={testimonial.id} delay={(i % 3) * 0.08}>
+        <Reveal
+          key={testimonial.id}
+          delay={(i % 3) * 0.08}
+          className="w-[85%] shrink-0 snap-start sm:w-auto"
+        >
           <Card className="card-hover h-full rounded-2xl">
             <CardContent className="flex h-full flex-col gap-4 pt-6">
               <p className="flex-1 text-[15px] leading-relaxed text-muted-foreground">

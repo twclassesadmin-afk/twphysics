@@ -1,3 +1,4 @@
+import { SITE_CONTACT } from "@/lib/site-config";
 import { LegalPage } from "@/components/marketing/legal-page";
 
 export default function PrivacyPolicyPage() {
@@ -38,7 +39,7 @@ export default function PrivacyPolicyPage() {
       <section>
         <h2>Contact</h2>
         <p>
-          Questions about this policy: <span className="font-medium text-foreground">support@twphysics.example</span>
+          Questions about this policy: <span className="font-medium text-foreground">{SITE_CONTACT.email}</span>
         </p>
       </section>
     </LegalPage>

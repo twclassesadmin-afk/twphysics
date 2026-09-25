@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, ChevronsUpDown, LogOut, User } from "lucide-react";
+import Image from "next/image";
+import { Menu, ChevronsUpDown, LogOut, User, ArrowUpRight } from "lucide-react";
 import { logout } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -20,6 +21,15 @@ import { SidebarNav } from "./sidebar-nav";
 import { NotificationsMenu } from "./notifications-menu";
 import { ROLE_NAV, ROLE_LABEL, ROLE_PROFILE_HREF, type DashboardRole } from "./nav-items";
 import type { Notification } from "@/lib/store/types";
+
+function Brand() {
+  return (
+    <Link href="/" className="flex items-center gap-2.5 font-serif text-lg font-bold tracking-tight text-foreground">
+      <Image src="/twlogo.jpeg" alt="" width={32} height={32} className="size-8 rounded-full" />
+      TWPHYSICS
+    </Link>
+  );
+}
 
 export function DashboardLayout({
   role,
@@ -46,18 +56,30 @@ export function DashboardLayout({
 
   return (
     <div className="flex min-h-screen">
-      <aside className="hidden w-64 shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground md:flex">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground md:flex">
         <div className="flex h-16 items-center border-b px-4">
-          <Link href="/" className="text-lg font-bold tracking-tight text-primary">
-            TWPHYSICS
-          </Link>
+          <Brand />
+        </div>
+        <div className="px-4 pt-4">
+          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold tracking-wider text-primary uppercase">
+            {roleLabel}
+          </span>
         </div>
         <div className="flex-1 overflow-y-auto p-3">
           <SidebarNav items={navItems} />
         </div>
+        <div className="border-t p-3">
+          <Link
+            href="/"
+            className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            Back to website
+            <ArrowUpRight className="size-4" />
+          </Link>
+        </div>
       </aside>
 
-      <div className="flex flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col bg-secondary/40">
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur-sm md:px-6">
           <div className="flex items-center gap-3">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -67,7 +89,9 @@ export function DashboardLayout({
                 <Menu className="size-5" />
               </SheetTrigger>
               <SheetContent side="left" className="w-64">
-                <SheetTitle className="px-4 pt-4 text-primary">TWPHYSICS</SheetTitle>
+                <SheetTitle className="px-4 pt-4">
+                  <Brand />
+                </SheetTitle>
                 <div className="p-3">
                   <SidebarNav items={navItems} onNavigate={() => setMobileOpen(false)} />
                 </div>
@@ -75,7 +99,7 @@ export function DashboardLayout({
             </Sheet>
             <div>
               <p className="text-xs text-muted-foreground">{roleLabel}</p>
-              <h1 className="text-lg font-semibold leading-tight">{pageTitle}</h1>
+              <h1 className="font-heading text-lg font-semibold leading-tight">{pageTitle}</h1>
             </div>
           </div>
 

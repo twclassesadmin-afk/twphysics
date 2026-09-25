@@ -1,5 +1,6 @@
 "use client";
 
+import { SITE_CONTACT } from "@/lib/site-config";
 import { useActionState, useRef, useState } from "react";
 import Link from "next/link";
 import { signup } from "../actions";
@@ -122,7 +123,7 @@ export function SignupForm({
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" placeholder="At least 6 characters" name="password" type="password" autoComplete="new-password" required={step === 2} />
+              <Input id="password" placeholder="At least 8 characters" name="password" type="password" autoComplete="new-password" required={step === 2} />
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label>Student type</Label>
@@ -230,8 +231,8 @@ export function SignupForm({
                 Offline registration is handled in person — please contact us to complete your
                 registration:
                 <br />
-                <span className="font-medium text-foreground">+91 90000 00000</span> ·{" "}
-                <span className="font-medium text-foreground">support@twphysics.example</span>
+                <span className="font-medium text-foreground">{SITE_CONTACT.phoneDisplay}</span> ·{" "}
+                <span className="font-medium text-foreground">{SITE_CONTACT.email}</span>
               </div>
             ) : (
               <div className="space-y-2 sm:col-span-2">
@@ -262,6 +263,12 @@ export function SignupForm({
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4 border-t-0 bg-transparent pt-6 pb-6">
+          {step === STEPS.length && learningMode === "online" && (
+            <p className="w-full rounded-lg bg-muted/60 px-3 py-2.5 text-sm text-muted-foreground">
+              No payment is taken online. After you register, our team will contact you to collect
+              the course fee and confirm your batch.
+            </p>
+          )}
           <div className="flex w-full gap-3">
             {step > 1 && (
               <Button type="button" variant="outline" size="lg" onClick={back} className="flex-1">

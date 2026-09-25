@@ -45,8 +45,22 @@ export async function setUserPassword(userId: string, newPassword: string): Prom
 
 export async function getAuthUserByEmail(email: string): Promise<{ id: string; email: string } | undefined> {
   const supabase = adminClient();
-  const { data, error } = await supabase.auth.admin.listUsers({ perPage: 1000 });
-  if (error) throw error;
-  const user = data.users.find((u) => u.email?.toLowerCase() === email.trim().toLowerCase());
-  return user ? { id: user.id, email: user.email ?? "" } : undefined;
+  const target = email.trim().toLowerCase();
+  // listUsers is paginated — walk every page so this keeps working past the
+  // first 1000 accounts.
+  for (let page = 1; ; page++) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) throw error;
+    const user = data.users.find((u) => u.email?.toLowerCase() === target);
+    if (user) return { id: user.id, email: user.email ?? "" };
+    if (data.users.length < 1000) return undefined;
+  }
+}
+
+// Used to roll back a half-finished registration so the email isn't left
+// "taken" by an auth user with no student record behind it.
+export async function deleteAuthUser(userId: string): Promise<void> {
+  const supabase = adminClient();
+  const { error } = await supabase.auth.admin.deleteUser(userId);
+  if (error) console.error("Failed to roll back auth user", userId, error.message);
 }

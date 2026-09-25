@@ -1,9 +1,7 @@
-// Client-visible time check only — a motivated user could bypass a disabled
-// "Start"/"Join" button via devtools (e.g. calling a Server Action directly).
-// Every Server Action that mutates exam-attempt or attendance state re-checks
-// these same functions server-side (see store/exams.ts), not just the UI.
-// Full tamper-resistant enforcement (DB-level, keyed off server time) is
-// deferred to the real Supabase backend phase.
+// Shared class-window checks. The UI uses them to enable/disable "Join", but
+// that's cosmetic — a Server Action can be called directly — so the actions
+// that record attendance (student/classes/actions.ts) re-run them on the
+// server with server time.
 
 export function hasStarted(scheduledAt: string | Date, now: Date = new Date()): boolean {
   return now.getTime() >= new Date(scheduledAt).getTime();

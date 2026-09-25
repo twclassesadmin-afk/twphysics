@@ -1,10 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentUser } from "@/lib/get-current-user";
-import { createAuthUser, setUserPassword, getAuthUserByEmail } from "@/lib/supabase/admin";
+import { getCurrentUser, requireRole } from "@/lib/get-current-user";
+import { createAuthUser, deleteAuthUser, setUserPassword, getAuthUserByEmail } from "@/lib/supabase/admin";
 import { getTutorApplication, reviewTutorApplication, createTutorFromApplication } from "@/lib/store/tutors";
-import { addStudent, assignStudentToBatch, getStudent } from "@/lib/store/students";
+import { addStudent, assignStudentToBatch, getStudent, setStudentFeePaid } from "@/lib/store/students";
 import { getBatch } from "@/lib/store/batches";
 import { logActivity } from "@/lib/store/activity";
 import { notifyUsers } from "@/lib/store/notifications";
@@ -12,6 +12,7 @@ import { notifyUsers } from "@/lib/store/notifications";
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
 export async function approveTutorApplication(applicationId: string, initialPassword: string): Promise<ActionResult> {
+  if (!(await requireRole("admin"))) return { ok: false, error: "Not authorized" };
   if (initialPassword.trim().length < 6) {
     return { ok: false, error: "Password must be at least 6 characters" };
   }
@@ -38,6 +39,7 @@ export async function approveTutorApplication(applicationId: string, initialPass
 }
 
 export async function rejectTutorApplication(applicationId: string): Promise<ActionResult> {
+  if (!(await requireRole("admin"))) return { ok: false, error: "Not authorized" };
   const application = await getTutorApplication(applicationId);
   if (!application) return { ok: false, error: "Application not found" };
   const user = await getCurrentUser();
@@ -57,6 +59,7 @@ export async function addStudentAction(input: {
   batchId: string;
   password: string;
 }): Promise<ActionResult> {
+  if (!(await requireRole("admin"))) return { ok: false, error: "Not authorized" };
   if (!input.name.trim()) return { ok: false, error: "Name is required" };
   if (!input.email.trim()) return { ok: false, error: "Email is required" };
   if (input.password.trim().length < 6) return { ok: false, error: "Password must be at least 6 characters" };
@@ -73,16 +76,24 @@ export async function addStudentAction(input: {
   });
   if ("error" in created) return { ok: false, error: created.error };
 
-  const student = await addStudent({
-    id: created.id,
-    phone: input.phone,
-    age: input.age || null,
-    parentName: input.parentName,
-    parentPhone: input.parentPhone,
-    address: input.address,
-    courseId: batch.courseId,
-    batchId: batch.id,
-  });
+  let student: Awaited<ReturnType<typeof addStudent>>;
+  try {
+    student = await addStudent({
+      id: created.id,
+      phone: input.phone,
+      age: input.age || null,
+      parentName: input.parentName,
+      parentPhone: input.parentPhone,
+      address: input.address,
+      courseId: batch.courseId,
+      batchId: batch.id,
+    });
+  } catch (err) {
+    // Don't leave a login behind with no student record attached.
+    console.error("Student record insert failed", err);
+    await deleteAuthUser(created.id);
+    return { ok: false, error: "Couldn't save the student record. Please try again." };
+  }
   await notifyUsers([student.id], {
     title: "Welcome to TWPHYSICS!",
     message: `You're enrolled in ${batch.course} — ${batch.name} (${batch.dailyTime}).`,
@@ -96,7 +107,19 @@ export async function addStudentAction(input: {
   return { ok: true };
 }
 
+export async function setFeePaid(studentId: string, feePaid: boolean): Promise<ActionResult> {
+  const admin = await requireRole("admin");
+  if (!admin) return { ok: false, error: "Not authorized" };
+  const student = await getStudent(studentId);
+  if (!student) return { ok: false, error: "Student not found" };
+  await setStudentFeePaid(studentId, feePaid);
+  await logActivity(admin.fullName, feePaid ? "Marked fee paid" : "Marked fee unpaid", student.name);
+  revalidatePath("/admin/users");
+  return { ok: true };
+}
+
 export async function assignStudentBatch(studentId: string, batchId: string): Promise<ActionResult> {
+  if (!(await requireRole("admin"))) return { ok: false, error: "Not authorized" };
   const student = await getStudent(studentId);
   if (!student) return { ok: false, error: "Student not found" };
   const batch = await getBatch(batchId);
@@ -118,6 +141,7 @@ export async function assignStudentBatch(studentId: string, batchId: string): Pr
 }
 
 export async function changeTutorPassword(tutorId: string, newPassword: string): Promise<ActionResult> {
+  if (!(await requireRole("admin"))) return { ok: false, error: "Not authorized" };
   if (newPassword.trim().length < 6) {
     return { ok: false, error: "Password must be at least 6 characters" };
   }

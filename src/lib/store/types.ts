@@ -83,6 +83,8 @@ export type Student = {
   learningType: LearningType | null;
   status: "active" | "expiring_soon";
   attendancePct: number;
+  // Fees are collected offline; an admin records receipt here.
+  feePaid: boolean;
   tag: StudentTag;
   tagNote: string;
   attendanceLog: AttendanceEntry[];

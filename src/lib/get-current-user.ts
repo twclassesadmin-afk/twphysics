@@ -27,3 +27,11 @@ export async function getCurrentUser(): Promise<SessionPayload | null> {
     fullName: profile.full_name ?? "",
   };
 }
+
+// Server Actions are public HTTP endpoints — the UI hiding a button is not
+// access control. Every privileged action must call this first, especially
+// ones that use the service-role client (which bypasses RLS entirely).
+export async function requireRole(role: UserRole): Promise<SessionPayload | null> {
+  const user = await getCurrentUser();
+  return user?.role === role ? user : null;
+}
