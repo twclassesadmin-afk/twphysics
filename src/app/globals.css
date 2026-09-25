@@ -241,19 +241,17 @@
 }
 
 /* ── Sunset theme ─────────────────────────────────────────────────────────
-   Hero uses the full sunset radial (orange horizon → pink → lavender → sky).
+   Hero uses the sunset radial with the orange horizon removed (pink → lavender → sky).
    Lighter sections borrow single tints from the same palette so the page reads
    as one system; the footer anchors it with a deep "silk" navy. */
 .bg-sunset {
   background-color: #94c9e9;
   background-image: radial-gradient(
     125% 125% at 50% 101%,
-    #f55702 10.5%,
-    #f57802 16%,
-    #f58c02 17.5%,
-    #f5aa64 25%,
-    #eeaeca 40%,
-    #cab3d6 65%,
+    #f4c6d6 0%,
+    #efb7cd 22%,
+    #dcb7d9 45%,
+    #bcbfe0 70%,
     #94c9e9 100%
   );
 }

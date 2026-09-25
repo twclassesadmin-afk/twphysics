@@ -16,7 +16,7 @@ export async function BatchShowcase() {
     <section id="batches" className="border-b bg-tint-sky py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeading
-          number={8}
+          number={6}
           eyebrow="Open batches"
           title="Seats are filling up"
           description="Real capacity, not fake urgency — this reflects actual batch enrollment."

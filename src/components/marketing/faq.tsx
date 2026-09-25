@@ -12,7 +12,7 @@ export function Faq() {
   return (
     <section id="faq" className="border-b py-20 sm:py-28">
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
-        <SectionHeading number={9} eyebrow="FAQ" title="Common questions" />
+        <SectionHeading number={7} eyebrow="FAQ" title="Common questions" />
         <Reveal delay={0.1}>
           <Accordion className="mt-12">
             {faqs.map((faq) => (

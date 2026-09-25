@@ -6,7 +6,6 @@ import { StudyApproachScroll } from "@/components/marketing/study-approach-scrol
 import { CourseCards } from "@/components/marketing/course-cards";
 import { PricingTiers } from "@/components/marketing/pricing-tiers";
 import { ResultsWall } from "@/components/marketing/results-wall";
-import { Testimonials } from "@/components/marketing/testimonials";
 import { BatchShowcase } from "@/components/marketing/batch-showcase";
 import { DoubtSupportBand } from "@/components/marketing/doubt-support-band";
 import { Faq } from "@/components/marketing/faq";
@@ -28,7 +27,6 @@ export default function Home() {
         <CourseCards />
         <PricingTiers />
         <ResultsWall />
-        <Testimonials />
         <BatchShowcase />
         <DoubtSupportBand />
         <Faq />

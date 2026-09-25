@@ -23,24 +23,24 @@ export async function CourseCards() {
           title="Choose your track"
           description="Pick your exam track, then choose your batch size below for the fee schedule."
         />
-        <div className="mt-14 grid gap-6 sm:grid-cols-2">
+        <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {courses.map((course, i) => {
             const { seatsLeft } = course;
             return (
               <Reveal key={course.id} delay={i * 0.08}>
-                <Card className="card-hover flex h-full flex-col rounded-2xl">
+                <Card className="card-hover flex h-full flex-col gap-3 rounded-2xl">
                   <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="font-heading text-2xl font-semibold">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <CardTitle className="font-heading text-xl font-semibold">
                         {course.name}
                       </CardTitle>
                       {seatsLeft <= 10 && (
                         <Badge variant="destructive">Only {seatsLeft} seats left</Badge>
                       )}
                     </div>
-                    <p className="text-[15px] text-muted-foreground">{course.tagline}</p>
+                    <p className="text-sm text-muted-foreground">{course.tagline}</p>
                   </CardHeader>
-                  <CardContent className="flex-1 space-y-5">
+                  <CardContent className="flex-1 space-y-4">
                     <div>
                       <p className="text-sm text-muted-foreground">{course.durationMonths}-month program</p>
                       {startingFrom !== null && (
@@ -56,9 +56,9 @@ export async function CourseCards() {
                         </p>
                       )}
                     </div>
-                    <ul className="space-y-2.5">
+                    <ul className="space-y-2">
                       {course.highlights.map((highlight) => (
-                        <li key={highlight} className="flex items-start gap-2.5 text-[15px]">
+                        <li key={highlight} className="flex items-start gap-2 text-sm">
                           <Check className="mt-0.5 size-4 shrink-0 text-success" />
                           <span>{highlight}</span>
                         </li>
@@ -66,7 +66,7 @@ export async function CourseCards() {
                     </ul>
                   </CardContent>
                   <CardFooter>
-                    <CtaButton href={`/signup?course=${course.id}`} size="lg" className="w-full justify-center">
+                    <CtaButton href={`/signup?course=${course.id}`} className="w-full justify-center">
                       Enroll Now
                     </CtaButton>
                   </CardFooter>

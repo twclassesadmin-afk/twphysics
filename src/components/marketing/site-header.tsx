@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button";
 import { CtaButton } from "@/components/ui/cta-button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 
+// Section links are root-relative so they still work from other pages.
 const NAV_LINKS = [
-  { href: "#courses", label: "Courses" },
-  { href: "#results", label: "Results" },
-  { href: "#batches", label: "Batches" },
-  { href: "#faq", label: "FAQ" },
+  { href: "/#courses", label: "Courses" },
+  { href: "/#results", label: "Results" },
+  { href: "/#batches", label: "Batches" },
+  { href: "/testimonials", label: "Testimonials" },
+  { href: "/#faq", label: "FAQ" },
 ];
 
 export function SiteHeader() {
