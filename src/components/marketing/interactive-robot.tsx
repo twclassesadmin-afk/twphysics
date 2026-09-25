@@ -83,22 +83,25 @@ export function InteractiveRobot({ className }: { className?: string }) {
   );
 
   return (
-    <div ref={ref} className={`relative ${className ?? ""}`}>
+    <div ref={ref} className={`relative overflow-hidden ${className ?? ""}`}>
       {/* Radial mask feathers every edge of the canvas into the section's
           background, so the scene doesn't read as a pasted-in rectangle. */}
-      <div className="size-full [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,black_55%,transparent_100%)]">
+      <div className="absolute inset-0 [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,black_55%,transparent_100%)]">
         {isDesktop && status === "load" ? (
-          <SceneBoundary fallback={placeholder}>
-            <Suspense fallback={placeholder}>
-              <Spline scene={ROBOT_SCENE_URL} className="size-full" />
-            </Suspense>
-          </SceneBoundary>
+          // The canvas is oversized (and still centred) so Spline's "Built with
+          // Spline" badge, pinned to its bottom-right corner, lands outside the
+          // clipped area instead of needing a colour-matched patch.
+          <div className="absolute -inset-x-44 -inset-y-12">
+            <SceneBoundary fallback={placeholder}>
+              <Suspense fallback={placeholder}>
+                <Spline scene={ROBOT_SCENE_URL} className="size-full" />
+              </Suspense>
+            </SceneBoundary>
+          </div>
         ) : (
           placeholder
         )}
       </div>
-      {/* Covers Spline's "Built with Spline" badge (bottom-right of the canvas). */}
-      <div aria-hidden className="absolute right-0 bottom-0 h-16 w-52 bg-foreground" />
     </div>
   );
 }

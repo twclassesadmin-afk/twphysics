@@ -13,7 +13,7 @@ export async function BatchShowcase() {
   );
 
   return (
-    <section id="batches" className="border-b bg-secondary/30 py-20 sm:py-28">
+    <section id="batches" className="border-b bg-tint-sky py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeading
           number={8}

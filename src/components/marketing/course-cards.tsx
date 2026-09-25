@@ -15,7 +15,7 @@ export async function CourseCards() {
   const startingFrom = pricingTiers.length > 0 ? Math.min(...pricingTiers.map((t) => t.monthlyFeeInr)) : null;
 
   return (
-    <section id="courses" className="border-b bg-secondary/30 py-20 sm:py-28">
+    <section id="courses" className="border-b bg-tint-sky py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeading
           number={3}

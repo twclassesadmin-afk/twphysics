@@ -10,7 +10,7 @@ const POLICY_LINKS = [
 
 export function SiteFooter() {
   return (
-    <footer className="bg-foreground text-background">
+    <footer className="grain bg-silk text-white">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-3">
         <div>
           <p className="flex items-center gap-2.5 font-serif text-lg font-bold">

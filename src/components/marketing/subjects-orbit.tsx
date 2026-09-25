@@ -100,7 +100,7 @@ export function OrbitVisual({ className }: { className?: string }) {
 
 export function SubjectsOrbit() {
   return (
-    <section className="relative overflow-hidden border-b bg-gradient-warm-soft py-20 sm:py-28">
+    <section className="relative overflow-hidden border-b bg-pink-band py-20 sm:py-28">
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.05]"
         style={{

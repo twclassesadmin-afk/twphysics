@@ -18,7 +18,7 @@ export async function Testimonials() {
   if (testimonials.length === 0) return null;
 
   return (
-    <section className="relative overflow-hidden border-b bg-gradient-warm-soft py-20 sm:py-28">
+    <section className="relative overflow-hidden border-b bg-pink-band py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeading number={7} eyebrow="Testimonials" title="What students and parents say" />
         <div className="mt-14 grid gap-6 sm:grid-cols-3">

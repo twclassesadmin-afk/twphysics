@@ -19,7 +19,7 @@ export async function ResultsWall() {
   if (results.length === 0) return null;
 
   return (
-    <section id="results" className="border-b py-20 sm:py-28">
+    <section id="results" className="border-b bg-tint-lavender py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeading
           number={5}
