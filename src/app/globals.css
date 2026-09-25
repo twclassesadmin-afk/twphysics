@@ -82,7 +82,7 @@
   --chart-3: oklch(0.62 0.15 320);
   --chart-4: oklch(0.6 0.15 145);
   --chart-5: oklch(0.3 0.01 80);
-  --radius: 0.75rem;
+  --radius: 1.05rem;
   --sidebar: oklch(0.97 0.005 80);
   --sidebar-foreground: oklch(0.145 0.005 80);
   --sidebar-primary: oklch(0.5 0.16 258);
@@ -168,6 +168,14 @@
     -webkit-backdrop-filter: blur(16px) saturate(140%);
     border: 1px solid color-mix(in oklch, var(--foreground) 10%, transparent);
   }
+  .card-hover {
+    transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.3s cubic-bezier(0.25, 0.1, 0.25, 1), border-color 0.3s;
+  }
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -18px color-mix(in oklch, var(--foreground) 18%, transparent);
+    border-color: color-mix(in oklch, var(--primary) 30%, transparent);
+  }
   .glass-dark {
     background-color: color-mix(in oklch, black 35%, transparent);
     backdrop-filter: blur(16px) saturate(140%);
@@ -215,4 +223,65 @@
   50% {
     transform: translate(3%, -4%) scale(1.08);
   }
+}
+/* Animating large blurred blobs forces a full re-blur every frame, which is
+   what makes the homepage stutter on phones. Keep them static there. */
+@media (max-width: 1023px), (prefers-reduced-motion: reduce) {
+  .motion-drift {
+    animation: none !important;
+  }
+}
+
+/* Soft pink stage for the pinned "study → approach" scroll section. */
+.bg-pink-band {
+  background-color: #fbe4ea;
+}
+.dark .bg-pink-band {
+  background-color: oklch(0.24 0.035 5);
+}
+
+/* ── Sunset theme ─────────────────────────────────────────────────────────
+   Hero uses the full sunset radial (orange horizon → pink → lavender → sky).
+   Lighter sections borrow single tints from the same palette so the page reads
+   as one system; the footer anchors it with a deep "silk" navy. */
+.bg-sunset {
+  background-color: #94c9e9;
+  background-image: radial-gradient(
+    125% 125% at 50% 101%,
+    #f55702 10.5%,
+    #f57802 16%,
+    #f58c02 17.5%,
+    #f5aa64 25%,
+    #eeaeca 40%,
+    #cab3d6 65%,
+    #94c9e9 100%
+  );
+}
+.bg-tint-sky {
+  background-image: linear-gradient(180deg, #eaf4fb 0%, #f7fbfe 100%);
+}
+.bg-tint-lavender {
+  background-image: linear-gradient(180deg, #f4effa 0%, #fbf9fd 100%);
+}
+.bg-silk {
+  background-color: #0b1e3b;
+  background-image: linear-gradient(180deg, #0b1e3b 0%, #133a63 55%, #1e5a8a 100%);
+}
+
+/* Faint film grain over a gradient — keeps large colour fields from looking
+   flat/banded. Children stay above it thanks to the isolated stacking context. */
+.grain {
+  position: relative;
+  isolation: isolate;
+}
+.grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 120px 120px;
 }

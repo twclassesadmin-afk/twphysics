@@ -300,7 +300,7 @@ export function TutorStudentsClient({ students, issues }: { students: Student[];
             <div className="space-y-2">
               <Label htmlFor="tag-note">Note (optional)</Label>
               <Textarea
-                id="tag-note"
+                id="tag-note" placeholder="Add a short note about this student..."
                 rows={3}
                 value={draftNote}
                 onChange={(e) => setDraftNote(e.target.value)}

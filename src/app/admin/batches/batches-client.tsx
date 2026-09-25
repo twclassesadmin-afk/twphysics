@@ -265,7 +265,7 @@ export function AdminBatchesClient({
                 <div className="space-y-2">
                   <Label htmlFor="course-name">Name</Label>
                   <Input
-                    id="course-name"
+                    id="course-name" placeholder="e.g. NEET 2027 Full Course"
                     value={newCourse.name}
                     onChange={(e) => setNewCourse({ ...newCourse, name: e.target.value })}
                   />
@@ -273,7 +273,7 @@ export function AdminBatchesClient({
                 <div className="space-y-2">
                   <Label htmlFor="course-tagline">Tagline</Label>
                   <Input
-                    id="course-tagline"
+                    id="course-tagline" placeholder="e.g. Complete PCB prep for NEET"
                     value={newCourse.tagline}
                     onChange={(e) => setNewCourse({ ...newCourse, tagline: e.target.value })}
                   />
@@ -281,7 +281,7 @@ export function AdminBatchesClient({
                 <div className="space-y-2">
                   <Label htmlFor="course-duration">Duration (months)</Label>
                   <Input
-                    id="course-duration"
+                    id="course-duration" placeholder="e.g. 12"
                     type="number"
                     value={newCourse.durationMonths}
                     onChange={(e) => setNewCourse({ ...newCourse, durationMonths: e.target.value })}
@@ -369,7 +369,7 @@ export function AdminBatchesClient({
                 <div className="space-y-2">
                   <Label htmlFor="batch-name">Name</Label>
                   <Input
-                    id="batch-name"
+                    id="batch-name" placeholder="e.g. NEET Morning Batch A"
                     value={newBatch.name}
                     onChange={(e) => setNewBatch({ ...newBatch, name: e.target.value })}
                   />
@@ -417,7 +417,7 @@ export function AdminBatchesClient({
                 <div className="space-y-2">
                   <Label htmlFor="batch-capacity">Capacity</Label>
                   <Input
-                    id="batch-capacity"
+                    id="batch-capacity" placeholder="e.g. 40"
                     type="number"
                     value={newBatch.capacity}
                     onChange={(e) => setNewBatch({ ...newBatch, capacity: e.target.value })}
@@ -644,7 +644,7 @@ export function AdminBatchesClient({
           <div className="space-y-2">
             <Label htmlFor="edit-daily-time">Daily timing</Label>
             <Input
-              id="edit-daily-time"
+              id="edit-daily-time" placeholder="7:00–8:30 AM"
               value={editDailyTime}
               onChange={(e) => setEditDailyTime(e.target.value)}
             />
@@ -680,7 +680,7 @@ export function AdminBatchesClient({
               <div className="space-y-2">
                 <Label htmlFor="tier-batch-size">Batch size</Label>
                 <Input
-                  id="tier-batch-size"
+                  id="tier-batch-size" placeholder="e.g. 9"
                   type="number"
                   value={tierDraft.batchSize}
                   onChange={(e) => setTierDraft({ ...tierDraft, batchSize: e.target.value })}
@@ -689,7 +689,7 @@ export function AdminBatchesClient({
               <div className="space-y-2">
                 <Label htmlFor="tier-monthly-fee">Monthly fee (₹)</Label>
                 <Input
-                  id="tier-monthly-fee"
+                  id="tier-monthly-fee" placeholder="e.g. 1999"
                   type="number"
                   value={tierDraft.monthlyFeeInr}
                   onChange={(e) => setTierDraft({ ...tierDraft, monthlyFeeInr: e.target.value })}
@@ -700,7 +700,7 @@ export function AdminBatchesClient({
               <div className="space-y-2">
                 <Label htmlFor="tier-subjects-count">Subjects covered</Label>
                 <Input
-                  id="tier-subjects-count"
+                  id="tier-subjects-count" placeholder="e.g. 3"
                   type="number"
                   value={tierDraft.subjectsCount}
                   onChange={(e) => setTierDraft({ ...tierDraft, subjectsCount: e.target.value })}
@@ -709,7 +709,7 @@ export function AdminBatchesClient({
               <div className="space-y-2">
                 <Label htmlFor="tier-days">Days/subject/month</Label>
                 <Input
-                  id="tier-days"
+                  id="tier-days" placeholder="e.g. 12"
                   type="number"
                   value={tierDraft.daysPerSubjectPerMonth}
                   onChange={(e) => setTierDraft({ ...tierDraft, daysPerSubjectPerMonth: e.target.value })}

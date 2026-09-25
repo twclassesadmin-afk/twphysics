@@ -98,7 +98,7 @@ export function TutorMaterialsClient({
               <div className="space-y-2">
                 <Label htmlFor="material-title">Title</Label>
                 <Input
-                  id="material-title"
+                  id="material-title" placeholder="e.g. Thermodynamics — Chapter Notes"
                   value={draft.title}
                   onChange={(e) => setDraft({ ...draft, title: e.target.value })}
                 />

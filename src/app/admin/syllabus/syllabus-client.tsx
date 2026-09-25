@@ -101,7 +101,7 @@ export function AdminSyllabusClient({ items, batches }: { items: SyllabusItem[];
               <div className="space-y-2">
                 <Label htmlFor="topic">Topic</Label>
                 <Input
-                  id="topic"
+                  id="topic" placeholder="e.g. Laws of Motion"
                   value={draft.topic}
                   onChange={(e) => setDraft({ ...draft, topic: e.target.value })}
                 />

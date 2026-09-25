@@ -214,7 +214,7 @@ export function TutorBatchesClient({ batches }: { batches: BatchWithClasses[] })
             <div className="space-y-2">
               <Label htmlFor="class-duration">Duration (minutes)</Label>
               <Input
-                id="class-duration"
+                id="class-duration" placeholder="e.g. 90"
                 type="number"
                 value={draft.durationMinutes}
                 onChange={(e) => setDraft({ ...draft, durationMinutes: e.target.value })}
@@ -263,7 +263,7 @@ export function TutorBatchesClient({ batches }: { batches: BatchWithClasses[] })
             <div className="space-y-2">
               <Label htmlFor="reschedule-duration">Duration (minutes)</Label>
               <Input
-                id="reschedule-duration"
+                id="reschedule-duration" placeholder="e.g. 90"
                 type="number"
                 value={rescheduleDraft.durationMinutes}
                 onChange={(e) => setRescheduleDraft({ ...rescheduleDraft, durationMinutes: e.target.value })}
@@ -272,7 +272,7 @@ export function TutorBatchesClient({ batches }: { batches: BatchWithClasses[] })
             <div className="space-y-2">
               <Label htmlFor="reschedule-url">Join link</Label>
               <Input
-                id="reschedule-url"
+                id="reschedule-url" placeholder="https://meet.google.com/..."
                 value={rescheduleDraft.joinUrl}
                 onChange={(e) => setRescheduleDraft({ ...rescheduleDraft, joinUrl: e.target.value })}
               />

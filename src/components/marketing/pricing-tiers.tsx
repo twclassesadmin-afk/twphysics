@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
 import { SectionHeading } from "./section-heading";
 import { Reveal } from "./reveal";
 import { listPricingTiers } from "@/lib/store/pricing";
@@ -19,6 +18,7 @@ export async function PricingTiers() {
     <section id="fees" className="border-b py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeading
+          number={4}
           eyebrow="Fee structure"
           title="Pick your batch size"
           description="A smaller batch means more individual attention — choose what fits. Every tier covers Physics, Chemistry, and your third subject, billed yearly in 3 terms."
@@ -27,19 +27,19 @@ export async function PricingTiers() {
           {tiers.map((tier, i) => {
             const recommended = tiers.length === 3 && i === 1;
             return (
-              <Reveal key={tier.id} delay={i * 0.08}>
+              <Reveal key={tier.id} delay={i * 0.08} className="relative pt-3">
+                {recommended && (
+                  <Badge className="absolute top-0 left-1/2 z-10 -translate-x-1/2 bg-accent-warm px-3 py-1 text-accent-warm-foreground shadow-md">
+                    Most chosen
+                  </Badge>
+                )}
                 <Card
                   className={
                     recommended
-                      ? "relative flex h-full flex-col border-primary/40 shadow-xl shadow-primary/10 ring-2 ring-primary/20"
-                      : "flex h-full flex-col"
+                      ? "card-hover flex h-full flex-col rounded-2xl border-primary/40 shadow-xl shadow-primary/10 ring-2 ring-primary/20"
+                      : "card-hover flex h-full flex-col rounded-2xl"
                   }
                 >
-                  {recommended && (
-                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent-warm text-accent-warm-foreground">
-                      Most chosen
-                    </Badge>
-                  )}
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="font-heading text-xl font-semibold">{tier.label}</CardTitle>
@@ -59,9 +59,9 @@ export async function PricingTiers() {
                     </p>
                   </CardContent>
                   <CardFooter>
-                    <Button render={<Link href="/signup" />} size="lg" className="w-full">
+                    <CtaButton href="/signup" size="lg" className="w-full justify-center">
                       Enroll Now
-                    </Button>
+                    </CtaButton>
                   </CardFooter>
                 </Card>
               </Reveal>

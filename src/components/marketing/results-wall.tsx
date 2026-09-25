@@ -22,6 +22,7 @@ export async function ResultsWall() {
     <section id="results" className="border-b py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeading
+          number={5}
           eyebrow="Results"
           title="Numbers our students are proud of"
           description="Real ranks, real scores — verified against admit cards at enrollment renewal."
@@ -29,7 +30,7 @@ export async function ResultsWall() {
         <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {results.map((result, i) => (
             <Reveal key={result.id} delay={i * 0.06}>
-              <Card className="h-full">
+              <Card className="card-hover h-full rounded-2xl">
                 <CardContent className="flex flex-col items-center gap-2 pt-6 text-center">
                   <Avatar className="size-14">
                     <AvatarFallback className="bg-secondary font-heading font-semibold text-foreground">

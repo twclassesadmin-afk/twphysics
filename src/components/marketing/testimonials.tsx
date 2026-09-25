@@ -18,13 +18,13 @@ export async function Testimonials() {
   if (testimonials.length === 0) return null;
 
   return (
-    <section className="border-b py-20 sm:py-28">
+    <section className="relative overflow-hidden border-b bg-gradient-warm-soft py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading eyebrow="Testimonials" title="What students and parents say" />
+        <SectionHeading number={7} eyebrow="Testimonials" title="What students and parents say" />
         <div className="mt-14 grid gap-6 sm:grid-cols-3">
           {testimonials.map((testimonial, i) => (
             <Reveal key={testimonial.id} delay={i * 0.08}>
-              <Card className="h-full">
+              <Card className="card-hover h-full rounded-2xl">
                 <CardContent className="flex flex-col gap-4 pt-6">
                   <p className="text-[15px] leading-relaxed text-muted-foreground">
                     &ldquo;{testimonial.quote}&rdquo;

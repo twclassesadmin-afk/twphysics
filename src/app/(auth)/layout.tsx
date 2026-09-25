@@ -22,7 +22,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             backgroundSize: "24px 24px",
           }}
         />
-        <div className="relative w-full max-w-md">{children}</div>
+        <div className="relative w-full max-w-2xl">{children}</div>
       </div>
     </div>
   );

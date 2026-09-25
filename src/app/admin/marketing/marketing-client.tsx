@@ -87,7 +87,7 @@ function ResultsTab({ results }: { results: ResultEntry[] }) {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="result-name">Student name</Label>
-                  <Input id="result-name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+                  <Input id="result-name" placeholder="e.g. Priya Reddy" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="result-exam">Exam</Label>
@@ -122,7 +122,7 @@ function ResultsTab({ results }: { results: ResultEntry[] }) {
               <div className="space-y-2">
                 <Label htmlFor="result-quote">Quote</Label>
                 <Textarea
-                  id="result-quote"
+                  id="result-quote" placeholder="What the student said about their preparation..."
                   rows={2}
                   value={draft.quote}
                   onChange={(e) => setDraft({ ...draft, quote: e.target.value })}
@@ -204,7 +204,7 @@ function TestimonialsTab({ testimonials }: { testimonials: Testimonial[] }) {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="testimonial-name">Name</Label>
-                <Input id="testimonial-name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+                <Input id="testimonial-name" placeholder="e.g. Srinivas Rao" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="testimonial-role">Role</Label>
@@ -218,7 +218,7 @@ function TestimonialsTab({ testimonials }: { testimonials: Testimonial[] }) {
               <div className="space-y-2">
                 <Label htmlFor="testimonial-quote">Quote</Label>
                 <Textarea
-                  id="testimonial-quote"
+                  id="testimonial-quote" placeholder="What they said about TWPHYSICS..."
                   rows={3}
                   value={draft.quote}
                   onChange={(e) => setDraft({ ...draft, quote: e.target.value })}

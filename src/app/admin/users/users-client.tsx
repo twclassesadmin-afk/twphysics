@@ -185,7 +185,7 @@ export function AdminUsersClient({
                       <div className="space-y-2">
                         <Label htmlFor="new-student-name">Full name</Label>
                         <Input
-                          id="new-student-name"
+                          id="new-student-name" placeholder="e.g. Ravi Kumar"
                           value={newStudent.name}
                           onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })}
                         />
@@ -194,7 +194,7 @@ export function AdminUsersClient({
                         <div className="space-y-2">
                           <Label htmlFor="new-student-email">Email</Label>
                           <Input
-                            id="new-student-email"
+                            id="new-student-email" placeholder="student@example.com"
                             type="email"
                             value={newStudent.email}
                             onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })}
@@ -203,7 +203,7 @@ export function AdminUsersClient({
                         <div className="space-y-2">
                           <Label htmlFor="new-student-phone">Phone</Label>
                           <Input
-                            id="new-student-phone"
+                            id="new-student-phone" placeholder="10-digit mobile number"
                             type="tel"
                             value={newStudent.phone}
                             onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })}
@@ -214,7 +214,7 @@ export function AdminUsersClient({
                         <div className="space-y-2">
                           <Label htmlFor="new-student-age">Age</Label>
                           <Input
-                            id="new-student-age"
+                            id="new-student-age" placeholder="e.g. 17"
                             type="number"
                             value={newStudent.age}
                             onChange={(e) => setNewStudent({ ...newStudent, age: e.target.value })}
@@ -234,7 +234,7 @@ export function AdminUsersClient({
                         <div className="space-y-2">
                           <Label htmlFor="new-student-parent-name">Parent/guardian name</Label>
                           <Input
-                            id="new-student-parent-name"
+                            id="new-student-parent-name" placeholder="Parent or guardian name"
                             value={newStudent.parentName}
                             onChange={(e) => setNewStudent({ ...newStudent, parentName: e.target.value })}
                           />
@@ -242,7 +242,7 @@ export function AdminUsersClient({
                         <div className="space-y-2">
                           <Label htmlFor="new-student-parent-phone">Parent/guardian phone</Label>
                           <Input
-                            id="new-student-parent-phone"
+                            id="new-student-parent-phone" placeholder="Parent’s 10-digit mobile number"
                             type="tel"
                             value={newStudent.parentPhone}
                             onChange={(e) => setNewStudent({ ...newStudent, parentPhone: e.target.value })}
@@ -252,7 +252,7 @@ export function AdminUsersClient({
                       <div className="space-y-2">
                         <Label htmlFor="new-student-address">Address</Label>
                         <Textarea
-                          id="new-student-address"
+                          id="new-student-address" placeholder="House no., street, city, PIN code"
                           rows={2}
                           value={newStudent.address}
                           onChange={(e) => setNewStudent({ ...newStudent, address: e.target.value })}

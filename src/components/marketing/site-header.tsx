@@ -19,7 +19,7 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-lg backdrop-saturate-150 supports-[backdrop-filter]:bg-background/65">
+    <header className="sticky top-0 z-40 border-b bg-background/95 md:bg-background/80 md:backdrop-blur-lg md:backdrop-saturate-150 md:supports-[backdrop-filter]:bg-background/65">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2.5 font-serif text-lg font-bold tracking-tight text-foreground">
           <Image src="/twlogo.jpeg" alt="TWPHYSICS" width={48} height={48} className="size-12 rounded-full" />

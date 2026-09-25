@@ -69,7 +69,7 @@ export function TutorProfileClient({ tutor }: { tutor: Tutor }) {
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone</Label>
                 <Input
-                  id="phone"
+                  id="phone" placeholder="10-digit mobile number"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 />
@@ -77,7 +77,7 @@ export function TutorProfileClient({ tutor }: { tutor: Tutor }) {
               <div className="space-y-2">
                 <Label htmlFor="availability">Availability</Label>
                 <Input
-                  id="availability"
+                  id="availability" placeholder="e.g. Weekday evenings"
                   value={form.availability}
                   onChange={(e) => setForm({ ...form, availability: e.target.value })}
                 />
@@ -85,7 +85,7 @@ export function TutorProfileClient({ tutor }: { tutor: Tutor }) {
               <div className="space-y-2">
                 <Label htmlFor="bio">Bio</Label>
                 <Textarea
-                  id="bio"
+                  id="bio" placeholder="Tell students about your teaching style and background..."
                   rows={4}
                   value={form.bio}
                   onChange={(e) => setForm({ ...form, bio: e.target.value })}

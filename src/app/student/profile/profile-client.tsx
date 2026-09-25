@@ -35,7 +35,7 @@ export function StudentProfileClient({ student }: { student: Student }) {
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
               <Input
-                id="phone"
+                id="phone" placeholder="10-digit mobile number"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
               />
@@ -43,7 +43,7 @@ export function StudentProfileClient({ student }: { student: Student }) {
             <div className="space-y-2">
               <Label htmlFor="address">Address</Label>
               <Textarea
-                id="address"
+                id="address" placeholder="House no., street, city, PIN code"
                 rows={3}
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}

@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { Check } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
 import { SectionHeading } from "./section-heading";
 import { Reveal } from "./reveal";
 import { listCourses, getCourseSeatsLeft } from "@/lib/store/batches";
@@ -19,6 +18,7 @@ export async function CourseCards() {
     <section id="courses" className="border-b bg-secondary/30 py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeading
+          number={3}
           eyebrow="Courses"
           title="Choose your track"
           description="Pick your exam track, then choose your batch size below for the fee schedule."
@@ -28,7 +28,7 @@ export async function CourseCards() {
             const { seatsLeft } = course;
             return (
               <Reveal key={course.id} delay={i * 0.08}>
-                <Card className="flex h-full flex-col">
+                <Card className="card-hover flex h-full flex-col rounded-2xl">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="font-heading text-2xl font-semibold">
@@ -66,9 +66,9 @@ export async function CourseCards() {
                     </ul>
                   </CardContent>
                   <CardFooter>
-                    <Button render={<Link href={`/signup?course=${course.id}`} />} size="lg" className="w-full">
+                    <CtaButton href={`/signup?course=${course.id}`} size="lg" className="w-full justify-center">
                       Enroll Now
-                    </Button>
+                    </CtaButton>
                   </CardFooter>
                 </Card>
               </Reveal>

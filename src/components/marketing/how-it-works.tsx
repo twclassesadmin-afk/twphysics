@@ -6,7 +6,7 @@ export function HowItWorks() {
   return (
     <section className="border-b bg-secondary/30 py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeading eyebrow="Process" title="How it works" />
+        <SectionHeading number={6} eyebrow="Process" title="How it works" />
         <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           {howItWorks.map((item, i) => (
             <Reveal key={item.step} delay={i * 0.08} className="text-center">

@@ -35,7 +35,7 @@ export function ApplyForm() {
             Thanks for applying — our admin team will review your details and reach out if it&apos;s a fit.
           </CardDescription>
         </CardHeader>
-        <CardFooter className="border-t bg-transparent">
+        <CardFooter className="border-t-0 bg-transparent pt-6 pb-6">
           <Link href="/" className="text-sm underline underline-offset-4">
             &larr; Back to home
           </Link>
@@ -61,17 +61,17 @@ export function ApplyForm() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="fullName">Full name</Label>
-              <Input id="fullName" name="fullName" autoComplete="name" required />
+              <Input id="fullName" placeholder="e.g. Dr. Anil Sharma" name="fullName" autoComplete="name" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" name="phone" type="tel" autoComplete="tel" required />
+              <Input id="phone" placeholder="10-digit mobile number" name="phone" type="tel" autoComplete="tel" required />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" name="email" type="email" autoComplete="email" required />
+            <Input id="email" placeholder="you@example.com" name="email" type="email" autoComplete="email" required />
           </div>
 
           <div className="space-y-2">
@@ -114,7 +114,7 @@ export function ApplyForm() {
 
           {state && "error" in state && <p className="text-sm text-destructive">{state.error}</p>}
         </CardContent>
-        <CardFooter className="flex flex-col gap-4 border-t bg-transparent">
+        <CardFooter className="flex flex-col gap-4 border-t-0 bg-transparent pt-6 pb-6">
           <Button type="submit" size="lg" className="w-full" disabled={pending || subjects.length === 0}>
             {pending ? "Submitting..." : "Submit application"}
           </Button>

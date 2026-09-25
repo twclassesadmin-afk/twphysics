@@ -1,7 +1,7 @@
 import { Radio, ListChecks, Users, MonitorSmartphone } from "lucide-react";
 import { SectionHeading } from "./section-heading";
 
-const PILLARS = [
+export const PILLARS = [
   {
     icon: Radio,
     title: "Live daily classes",
@@ -24,14 +24,22 @@ const PILLARS = [
   },
 ];
 
+export const APPROACH_HEADING = {
+  eyebrow: "Why TWPHYSICS",
+  title: "Built differently, from day one",
+  description:
+    "We're a new platform — so instead of asking you to trust a brand name, here's exactly how we teach.",
+};
+
 export function OurApproach() {
   return (
     <section className="border-b py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeading
-          eyebrow="Why TWPHYSICS"
-          title="Built differently, from day one"
-          description="We're a new platform — so instead of asking you to trust a brand name, here's exactly how we teach."
+          number={2}
+          eyebrow={APPROACH_HEADING.eyebrow}
+          title={APPROACH_HEADING.title}
+          description={APPROACH_HEADING.description}
         />
         <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {PILLARS.map((pillar) => (
